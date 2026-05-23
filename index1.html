@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VLU Challenge Portal - Vetting & PR Engine</title>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts: Outfit (Heading) & Inter (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;850;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Canvas Confetti Library for satisfying achievements -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            heading: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              gold: '#fbbf24', // Amber/Gold for Elite badging
+              accent: '#f43f5e', // Rose accent
+              darkbg: '#030712', // Pure deep space background
+              cardbg: '#0f172a', // Sleek card gray-blue
+              border: '#1e293b', // Muted slate borders
+              success: '#10b981', // Emerald
+            }
+          },
+          fontSize: {
+            '2xs': '0.7rem',
+            '3xs': '0.6rem',
+            'xxs': '0.65rem'
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 4s ease-in-out infinite',
+            'shimmer': 'shimmer 2s linear infinite',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style type="text/css">
+    /* Glassmorphism style cards */
+    .glass-card {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    
+    .glass-modal {
+      background: rgba(8, 12, 28, 0.9);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    /* Holographic glowing seal for badging */
+    .hologram-seal {
+      background: linear-gradient(135deg, rgba(251,191,36,0.15) 0%, rgba(244,63,94,0.15) 50%, rgba(99,102,241,0.15) 100%);
+      box-shadow: 0 0 25px rgba(251, 191, 36, 0.2), inset 0 0 15px rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+    }
+
+    /* Scanning beam laser animation */
+    .scanning-line {
+      animation: scan 2.5s ease-in-out infinite;
+    }
+
+    @keyframes scan {
+      0% { top: 0%; opacity: 0.3; }
+      50% { top: 100%; opacity: 0.9; }
+      100% { top: 0%; opacity: 0.3; }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* Hide standard scrollbars for premium UI layout */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #030712;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="bg-brand-darkbg text-slate-300 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-accent/30 selection:text-white overflow-x-hidden">
+
+  <!-- Interactive Top Banner to switch simulation roles -->
+  <div class="bg-gradient-to-r from-indigo-950 via-slate-900 to-rose-950 border-b border-brand-border px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs z-40">
+    <div class="flex items-center space-x-2">
+      <span class="inline-flex items-center px-2 py-0.5 rounded bg-brand-accent/20 text-brand-accent border border-brand-accent/30 font-bold tracking-widest text-[9px] uppercase animate-pulse">
+        DEMO CONTROLLER
+      </span>
+      <span class="text-slate-400 font-medium">Toggle active portal simulation role:</span>
+    </div>
+    
+    <div class="flex items-center space-x-2">
+      <button onclick="switchRole('student')" id="roleBtn-student" class="role-btn px-3 py-1.5 rounded-lg font-bold transition-all flex items-center bg-brand-accent text-white shadow-lg">
+        <i class="fa-solid fa-graduation-cap mr-1.5"></i> Student View
+      </button>
+      <button onclick="switchRole('manager')" id="roleBtn-manager" class="role-btn px-3 py-1.5 rounded-lg font-bold transition-all flex items-center text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+        <i class="fa-solid fa-user-tie mr-1.5"></i> Hiring Manager (Agency)
+      </button>
+      <button onclick="switchRole('admin')" id="roleBtn-admin" class="role-btn px-3 py-1.5 rounded-lg font-bold transition-all flex items-center text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+        <i class="fa-solid fa-building-columns mr-1.5"></i> University Admin
+      </button>
+    </div>
+  </div>
+
+  <div class="flex flex-1 overflow-hidden relative">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-slate-950 border-r border-brand-border flex flex-col justify-between shrink-0 hidden md:flex">
+      <div class="p-6 space-y-8">
+        
+        <!-- Platform Branding logo header -->
+        <div class="flex items-center space-x-3">
+          <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-brand-accent to-rose-600 flex items-center justify-center text-white shadow-lg shadow-rose-950/50">
+            <i class="fa-solid fa-cubes text-lg"></i>
+          </div>
+          <div>
+            <h1 class="text-sm font-extrabold font-heading text-white tracking-wider uppercase">VLU CHALLENGE</h1>
+            <span class="text-[9px] text-brand-accent uppercase font-black tracking-widest block">PORTAL ENGINE</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Nav Items dependent on currently selected role -->
+        <nav class="space-y-1.5" id="dynamicNavContainer">
+          <!-- Populated by JavaScript switchRole -->
+        </nav>
+      </div>
+
+      <!-- Live Statistics / Mini Counter widget in Sidebar -->
+      <div class="p-6 space-y-4 border-t border-brand-border bg-slate-950/40">
+        <div class="space-y-2">
+          <span class="text-3xs uppercase font-extrabold tracking-wider text-slate-500 block">CAMPUS ANALYTICS</span>
+          <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400">Total Entries</span>
+              <span id="sidebar-total" class="font-bold text-slate-200">0</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400">Badge Earners</span>
+              <span id="sidebar-badges" class="font-bold text-brand-gold">0</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400">PR Stories</span>
+              <span id="sidebar-stories" class="font-bold text-indigo-400">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content Panel -->
+    <main class="flex-grow p-6 md:p-8 overflow-y-auto max-w-full relative">
+      
+      <!-- ==================== VIEW 1: STUDENT PORTAL ==================== -->
+      <div id="view-student" class="view-container space-y-8 block">
+        
+        <!-- Header Banner -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-gradient-to-r from-slate-900 to-brand-cardbg border border-brand-border rounded-3xl p-6 lg:p-8 shadow-2xl relative overflow-hidden">
+          <div class="absolute right-0 top-0 w-80 h-80 bg-brand-accent/5 rounded-full blur-[90px] pointer-events-none"></div>
+          <div class="absolute left-1/3 bottom-0 w-60 h-60 bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none"></div>
+          
+          <div class="space-y-3 max-w-xl z-10">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+              <i class="fa-solid fa-sparkles mr-1.5 text-brand-gold animate-pulse"></i> Real-world Career Vetting Arena
+            </span>
+            <h2 class="text-2xl lg:text-3xl font-extrabold tracking-tight font-heading text-white">Chứng thực thực chiến - Chốt kèo tuyển sinh</h2>
+            <p class="text-slate-400 text-sm leading-relaxed">Chinh phục thử thách thực tế từ các doanh nghiệp lớn. Nhận đánh giá AI tức thì và xác thực từ chuyên gia để mở khóa các huy hiệu năng lực chuyên môn danh giá!</p>
+          </div>
+
+          <!-- Student stats widget -->
+          <div class="flex gap-4 shrink-0 z-10">
+            <div class="glass-card rounded-2xl p-4 flex flex-col items-center justify-center w-28 border border-white/5 shadow-lg">
+              <span class="text-xs font-semibold text-slate-400 mb-1">Target Score</span>
+              <span class="text-2xl font-black text-brand-gold">80+</span>
+              <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400 mt-1">To Get Vetted</span>
+            </div>
+            <div class="glass-card rounded-2xl p-4 flex flex-col items-center justify-center w-28 border border-white/5 shadow-lg">
+              <span class="text-xs font-semibold text-slate-400 mb-1">My Badges</span>
+              <span id="student-badge-count" class="text-2xl font-black text-indigo-400">0</span>
+              <span class="text-[9px] uppercase font-bold tracking-wider text-slate-400 mt-1">Earned Badge</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Active Challenges -->
+        <div class="space-y-4" id="studentChallengeDirectory">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold font-heading text-white">Active Corporate Challenges</h3>
+              <p class="text-xs text-slate-500">Pick a creative brief below to solve and showcase your execution capabilities.</p>
+            </div>
+            <div class="flex space-x-2">
+              <span class="px-2.5 py-1 rounded bg-slate-900 border border-brand-border text-xxs font-bold text-slate-450">Active: 4</span>
+            </div>
+          </div>
+
+          <!-- Challenge list grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="challengeGridContainer">
+            <!-- Populated dynamically by JS -->
+          </div>
+        </div>
+
+        <!-- Section: Student Detail View & Solution Submission Form (Hidden until challenge clicked) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 hidden" id="studentSubmissionSection">
+          
+          <!-- Column Left: Challenge Info Brief -->
+          <div class="lg:col-span-7 space-y-6">
+            <button onclick="backToDirectory()" class="text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center">
+              <i class="fa-solid fa-arrow-left mr-2"></i> Back to Challenges Directory
+            </button>
+
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-5">
+              <div class="flex items-center justify-between border-b border-brand-border pb-4">
+                <div class="flex items-center space-x-3">
+                  <img id="detailAgencyLogo" src="" alt="Agency Logo" class="h-10 w-10 rounded-lg object-contain bg-white p-1 border border-brand-border">
+                  <div>
+                    <h3 class="text-lg font-bold font-heading text-white" id="detailChallengeTitle">Challenge Title</h3>
+                    <span class="text-xs text-brand-accent font-semibold" id="detailAgencyName">Agency Name</span>
+                  </div>
+                </div>
+                <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-3xs font-extrabold uppercase rounded border border-emerald-500/20">Active</span>
+              </div>
+
+              <div class="space-y-4">
+                <div>
+                  <h4 class="text-xs font-bold text-slate-450 uppercase tracking-widest mb-1.5">Challenge Description</h4>
+                  <p class="text-xs text-slate-350 leading-relaxed" id="detailChallengeDesc">Detailed instructions...</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 bg-slate-950/40 p-4 rounded-xl border border-brand-border">
+                  <div>
+                    <span class="text-3xs uppercase font-extrabold tracking-wider text-slate-500 block mb-1">Required Skills</span>
+                    <div class="flex flex-wrap gap-1" id="detailSkillsContainer">
+                      <!-- Dynamically added badges -->
+                    </div>
+                  </div>
+                  <div>
+                    <span class="text-3xs uppercase font-extrabold tracking-wider text-slate-500 block mb-1">Submission Format</span>
+                    <span class="text-xs font-semibold text-slate-300"><i class="fa-solid fa-file-invoice mr-1.5 text-brand-accent"></i>PDF / Word solution</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between bg-slate-950/60 border border-brand-border rounded-xl p-3.5">
+                  <div class="flex items-center space-x-3">
+                    <div class="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                      <i class="fa-solid fa-file-pdf text-lg animate-pulse"></i>
+                    </div>
+                    <div>
+                      <p class="text-xs font-bold text-slate-200">Creative Brief & Requirements.pdf</p>
+                      <p class="text-[10px] text-slate-500">Official challenge document guidelines (1.2 MB)</p>
+                    </div>
+                  </div>
+                  <a href="#" onclick="alert('Demo: Downloading requirements PDF brief.')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-lg text-xs font-semibold text-slate-300 transition-colors">
+                    <i class="fa-solid fa-download"></i> Download Brief
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column Right: Submission Form -->
+          <div class="lg:col-span-5 space-y-6">
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-5 relative">
+              <h3 class="text-base font-bold font-heading text-slate-200 flex items-center">
+                <i class="fa-solid fa-paper-plane text-brand-accent mr-2"></i> Submit Solution Panel
+              </h3>
+              
+              <!-- Quick demo fillers -->
+              <div class="bg-slate-950/80 rounded-xl p-3.5 border border-brand-border space-y-2">
+                <span class="text-[10px] uppercase font-black text-slate-500 tracking-wider block">Demo Quick Fills:</span>
+                <div class="flex flex-wrap gap-1.5">
+                  <button type="button" onclick="loadMockStudentTemplate('marketing-elite')" class="px-2 py-1 bg-slate-900 border border-brand-border rounded-md text-3xs font-bold text-slate-400 hover:border-emerald-500 transition-all flex items-center">
+                    <i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i> Elite Marketing Solution (92)
+                  </button>
+                  <button type="button" onclick="loadMockStudentTemplate('pr-elite')" class="px-2 py-1 bg-slate-900 border border-brand-border rounded-md text-3xs font-bold text-slate-400 hover:border-emerald-500 transition-all flex items-center">
+                    <i class="fa-solid fa-circle-check mr-1 text-emerald-400"></i> Elite PR Plan (86)
+                  </button>
+                  <button type="button" onclick="loadMockStudentTemplate('design-low')" class="px-2 py-1 bg-slate-900 border border-brand-border rounded-md text-3xs font-bold text-slate-400 hover:border-amber-500 transition-all flex items-center">
+                    <i class="fa-solid fa-triangle-exclamation mr-1 text-amber-500"></i> Standard Design Idea (68)
+                  </button>
+                </div>
+              </div>
+
+              <form id="submissionForm" class="space-y-4" onsubmit="handleChallengeSubmit(event)">
+                <input type="hidden" id="submitChallengeId" value="">
+                
+                <div>
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">Full Name</label>
+                  <input type="text" id="stu-name" required placeholder="e.g. Quynh Huong Nguyen" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-accent transition-all">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-455 mb-1.5">Academic Major</label>
+                    <select id="stu-major" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-3 py-2.5 text-xs text-slate-250 focus:outline-none focus:border-brand-accent transition-all">
+                      <option value="Quan hệ Công chúng (PR)">Public Relations & Comms</option>
+                      <option value="Digital Marketing">Digital Marketing</option>
+                      <option value="Graphic Design & Multimedia">Graphic Design & Multimedia</option>
+                      <option value="Software Engineering">Software Engineering</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-455 mb-1.5">Email Address</label>
+                    <input type="email" id="stu-email" required placeholder="name@vanlanguni.edu.vn" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-accent transition-all">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <!-- Resume PDF Upload dropzone -->
+                  <div>
+                    <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-455 mb-1.5">1. CV/Portfolio Upload</label>
+                    <div class="relative border border-dashed border-slate-800 hover:border-brand-accent/50 bg-slate-950/50 rounded-xl p-3.5 text-center cursor-pointer transition-all group" onclick="document.getElementById('stu-cv-file').click()">
+                      <input type="file" id="stu-cv-file" class="hidden" accept=".pdf" onchange="handleFileSelected(this, 'cvFileName', 'cvEmpty', 'cvSuccess')">
+                      
+                      <div id="cvEmpty" class="space-y-1">
+                        <i class="fa-solid fa-cloud-arrow-up text-lg text-slate-500 group-hover:text-brand-accent transition-colors"></i>
+                        <p class="text-[10px] font-semibold text-slate-400">Upload CV (PDF)</p>
+                      </div>
+                      <div id="cvSuccess" class="hidden flex items-center justify-center space-x-1.5">
+                        <i class="fa-solid fa-file-circle-check text-base text-emerald-400"></i>
+                        <span id="cvFileName" class="text-[10px] font-semibold text-emerald-400 truncate max-w-[120px]">cv.pdf</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Challenge Solution PDF/Word Upload dropzone -->
+                  <div>
+                    <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-455 mb-1.5">2. Challenge Solution (Brief)</label>
+                    <div class="relative border border-dashed border-slate-800 hover:border-brand-accent/50 bg-slate-950/50 rounded-xl p-3.5 text-center cursor-pointer transition-all group" onclick="document.getElementById('stu-sol-file').click()">
+                      <input type="file" id="stu-sol-file" class="hidden" accept=".pdf,.doc,.docx" onchange="handleFileSelected(this, 'solFileName', 'solEmpty', 'solSuccess')">
+                      
+                      <div id="solEmpty" class="space-y-1">
+                        <i class="fa-solid fa-file-invoice text-lg text-slate-500 group-hover:text-brand-accent transition-colors"></i>
+                        <p class="text-[10px] font-semibold text-slate-400">Upload Solution (PDF/Word)</p>
+                      </div>
+                      <div id="solSuccess" class="hidden flex items-center justify-center space-x-1.5">
+                        <i class="fa-solid fa-file-circle-check text-base text-emerald-400"></i>
+                        <span id="solFileName" class="text-[10px] font-semibold text-emerald-400 truncate max-w-[120px]">sol.pdf</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">Executive Summary / Quick notes</label>
+                  <textarea id="stu-notes" rows="3" placeholder="Explain your core strategy, goals, or solutions briefly..." class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-accent transition-all leading-relaxed"></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-brand-accent to-rose-600 hover:from-rose-500 hover:to-rose-600 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-brand-accent/15 flex items-center justify-center space-x-2 text-xs">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span>Launch AI Vetting Scanner</span>
+                </button>
+              </form>
+
+              <!-- Simulated AI Scanner Screen Overlay (Hidden by Default) -->
+              <div id="aiScannerOverlay" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md rounded-3xl z-30 flex flex-col items-center justify-center p-6 text-center transition-all duration-300">
+                <div class="relative w-64 h-32 bg-slate-900 border border-brand-accent/30 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center mb-6">
+                  <div class="absolute inset-0 bg-[radial-gradient(circle,rgba(244,63,94,0.06)_1px,transparent_1px)] bg-[size:10px_10px]"></div>
+                  <div class="scanning-line absolute left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-accent to-transparent shadow-[0_0_12px_rgba(244,63,94,0.7)]"></div>
+                  
+                  <div class="text-center z-10 px-4 space-y-1">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">AI EVALUATOR CORE</span>
+                    <span class="text-base font-black text-brand-accent tracking-wider flex items-center justify-center">
+                      <i class="fa-solid fa-microchip mr-2 animate-spin text-brand-accent"></i>
+                      <span id="scanPercent">0%</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="max-w-md space-y-3">
+                  <h4 class="text-sm font-bold font-heading text-white">AI Vetting Assessment Engine</h4>
+                  <div class="h-1 w-48 bg-slate-800 rounded-full mx-auto overflow-hidden">
+                    <div id="scanProgressBar" class="h-full bg-gradient-to-r from-brand-accent to-rose-500 w-0 transition-all duration-100 ease-out"></div>
+                  </div>
+                  <div id="scanConsole" class="text-[10px] font-mono text-slate-400 h-10 flex flex-col items-center justify-center">
+                    Initializing model matrices...
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Student Results Dashboard (Hidden by default, shown after scan) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 hidden" id="studentResultsDashboard">
+          
+          <!-- Left Column: Score gauge, details, status -->
+          <div class="lg:col-span-8 space-y-6">
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-6">
+              
+              <div class="flex items-center justify-between border-b border-brand-border pb-4">
+                <div>
+                  <span class="text-3xs uppercase font-extrabold tracking-wider text-slate-500">Vetting Result</span>
+                  <h3 class="text-lg font-bold font-heading text-white" id="res-challenge-title">Vinamilk Creative Challenge</h3>
+                </div>
+                <span id="res-status-badge" class="inline-flex items-center px-2.5 py-1 rounded-full text-2xs font-extrabold tracking-wider uppercase border border-slate-700 bg-slate-800 text-slate-350">
+                  Pending Review
+                </span>
+              </div>
+
+              <div class="flex flex-col md:flex-row items-center gap-6 bg-slate-950/40 p-5 rounded-2xl border border-brand-border">
+                
+                <!-- Circular Score Gauge -->
+                <div class="relative flex items-center justify-center shrink-0">
+                  <svg class="w-32 h-32 transform -rotate-90">
+                    <circle cx="64" cy="64" r="56" stroke="#1e293b" stroke-width="8" fill="transparent" />
+                    <circle id="res-score-ring" cx="64" cy="64" r="56" stroke="#f43f5e" stroke-width="8" fill="transparent" 
+                            stroke-dasharray="351.8" stroke-dashoffset="351.8" class="transition-all duration-1000 ease-out" />
+                  </svg>
+                  <div class="absolute text-center">
+                    <span id="res-score-text" class="text-3xl font-black font-heading text-white">0</span>
+                    <span class="text-3xs text-slate-500 block uppercase font-bold tracking-wider">AI Score</span>
+                  </div>
+                </div>
+
+                <!-- Score breakdown & feedback text -->
+                <div class="space-y-3">
+                  <h4 class="text-xs font-bold text-slate-200">AI Scoring Rubric Breakdown</h4>
+                  <p class="text-xs text-slate-400 leading-relaxed">Our AI evaluated your CV alignment and challenge solution brief based on: Practical application viability (40%), target audience insights (30%), and documentation layout (30%).</p>
+                  
+                  <div id="res-status-message-box" class="rounded-xl p-3 text-xs border border-brand-border">
+                    <p id="res-status-message-text">Message details here...</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI Feedback Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Strengths -->
+                <div class="bg-slate-950/45 border border-slate-900 rounded-xl p-4 space-y-2">
+                  <span class="text-xs font-bold text-emerald-400 flex items-center"><i class="fa-solid fa-circle-check mr-2"></i>Key Strengths</span>
+                  <ul class="text-[11px] text-slate-350 space-y-1.5 list-disc pl-4 leading-relaxed" id="res-strengths-list">
+                    <!-- Loaded dynamically -->
+                  </ul>
+                </div>
+                
+                <!-- Gaps -->
+                <div class="bg-slate-950/45 border border-slate-900 rounded-xl p-4 space-y-2">
+                  <span class="text-xs font-bold text-amber-400 flex items-center"><i class="fa-solid fa-circle-exclamation mr-2"></i>Identified Gaps</span>
+                  <ul class="text-[11px] text-slate-350 space-y-1.5 list-disc pl-4 leading-relaxed" id="res-gaps-list">
+                    <!-- Loaded dynamically -->
+                  </ul>
+                </div>
+                
+                <!-- Actions -->
+                <div class="bg-slate-950/45 border border-slate-900 rounded-xl p-4 space-y-2">
+                  <span class="text-xs font-bold text-indigo-400 flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Action Steps</span>
+                  <ul class="text-[11px] text-slate-350 space-y-1.5 list-disc pl-4 leading-relaxed" id="res-actions-list">
+                    <!-- Loaded dynamically -->
+                  </ul>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Right Column: Digital Badge Display -->
+          <div class="lg:col-span-4 space-y-6">
+            <div id="badgeStatusContainer" class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl flex flex-col items-center justify-center text-center space-y-4 min-h-[300px]">
+              <!-- Locked state default -->
+              <div id="badgeLockedState" class="space-y-4">
+                <div class="h-20 w-20 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 mx-auto">
+                  <i class="fa-solid fa-lock text-3xl"></i>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-300">Badge Locked</h4>
+                  <p class="text-xs text-slate-500 px-4 leading-relaxed mt-1">Acquire an AI score of 80+ to send your solution to the Hiring Manager for authentication and Badge release.</p>
+                </div>
+              </div>
+
+              <!-- Unlocked State (Pending Manager) -->
+              <div id="badgePendingState" class="hidden space-y-4">
+                <div class="h-20 w-20 rounded-full bg-indigo-950/40 border border-indigo-800/40 flex items-center justify-center text-indigo-400 mx-auto animate-pulse">
+                  <i class="fa-solid fa-hourglass-half text-3xl"></i>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-indigo-300">Vetting Approval Pending</h4>
+                  <p class="text-xs text-slate-450 px-4 leading-relaxed mt-1">Excellent! Your AI score is above the benchmark. The corporate Hiring Manager has been notified to verify your entry.</p>
+                </div>
+              </div>
+
+              <!-- Unlocked State (Approved - Hologram Badge) -->
+              <div id="badgeUnlockedState" class="hidden space-y-5 w-full">
+                <div class="hologram-seal rounded-2xl p-6 max-w-[240px] mx-auto relative overflow-hidden animate-float">
+                  <div class="absolute -right-4 -bottom-4 w-16 h-16 bg-brand-gold/10 rounded-full blur-lg pointer-events-none"></div>
+                  
+                  <div class="h-16 w-16 bg-gradient-to-br from-brand-gold to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-gold/20 mx-auto mb-3.5 relative">
+                    <i class="fa-solid fa-award text-white text-3xl"></i>
+                    <span class="absolute inset-0 rounded-2xl border-2 border-white/20 animate-pulse-slow"></span>
+                  </div>
+                  
+                  <span class="text-[9px] font-extrabold uppercase bg-brand-gold/20 text-brand-gold px-2.5 py-0.5 rounded border border-brand-gold/30 block w-max mx-auto mb-1">
+                    AGENCY-READY
+                  </span>
+                  <h5 class="text-xs font-black font-heading text-white uppercase tracking-wider" id="badgeChallengeName">PR SPECIALIST</h5>
+                  <p class="text-[9px] text-slate-400 mt-1" id="badgeAgencyBrand">Ogilvy Certified</p>
+                </div>
+                
+                <div class="space-y-2">
+                  <h4 class="text-sm font-bold text-white">Badge Unlocked & Approved!</h4>
+                  <p class="text-xs text-slate-400 leading-relaxed px-4">Your professional capabilities are now certified by the partner agency. Show off your verified practical skills!</p>
+                  
+                  <button onclick="shareOnLinkedIn()" class="inline-flex items-center px-4 py-2 bg-[#0a66c2] hover:bg-[#004182] text-white text-xs font-bold rounded-lg transition-colors space-x-1.5 shadow-md shadow-blue-900/25">
+                    <i class="fa-brands fa-linkedin text-sm"></i>
+                    <span>Share to LinkedIn</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== VIEW 2: HIRING MANAGER PORTAL ==================== -->
+      <div id="view-manager" class="view-container space-y-8 hidden">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-extrabold tracking-tight font-heading text-white">Hiring Manager Trust Verification Hub</h2>
+            <p class="text-slate-400 text-xs mt-0.5">Sifting outstanding submissions vetted by AI (Score 80+) to verify capabilities and grant credentials.</p>
+          </div>
+          
+          <!-- Filters -->
+          <div class="flex items-center space-x-3">
+            <select id="managerFilterChallenge" onchange="renderManagerTable()" class="bg-slate-900/90 border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-350 focus:outline-none focus:border-brand-accent transition-all">
+              <option value="ALL">All Challenges</option>
+              <!-- Populated by JS -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Submission Data Table -->
+        <div class="glass-card rounded-3xl border border-brand-border shadow-xl overflow-hidden">
+          <div class="px-6 py-5 border-b border-brand-border flex items-center justify-between bg-slate-950/30">
+            <h3 class="text-sm font-bold font-heading text-slate-200">Evaluation Queue (AI score &ge; 80)</h3>
+            <span class="text-3xs uppercase font-extrabold bg-slate-900 border border-brand-border text-slate-400 px-2.5 py-1 rounded-full">
+              TRUST PROXIES ACTIVE
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-950/60 border-b border-brand-border text-3xs font-bold text-slate-500 uppercase tracking-widest">
+                  <th class="px-6 py-4">Student Candidate</th>
+                  <th class="px-6 py-4">Challenge Vetted</th>
+                  <th class="px-6 py-4">AI Core Score</th>
+                  <th class="px-6 py-4">Verification Status</th>
+                  <th class="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="managerTableBody" class="divide-y divide-slate-800/40 text-xs text-slate-350">
+                <!-- Loaded dynamically by JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty table state -->
+          <div id="managerEmptyState" class="hidden text-center py-16 space-y-3">
+            <div class="text-slate-600 text-3xl"><i class="fa-solid fa-folder-open"></i></div>
+            <h4 class="text-sm font-bold text-slate-350">Vetting queue is empty</h4>
+            <p class="text-xs text-slate-550">No students are currently waiting for corporate verification.</p>
+          </div>
+        </div>
+
+        <!-- Split-Screen Review Modal (Hidden by default) -->
+        <div id="splitReviewModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div class="glass-modal w-full max-w-6xl h-[85vh] rounded-3xl border border-brand-border shadow-2xl flex flex-col overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-brand-border flex items-center justify-between bg-slate-950/90">
+              <div class="flex items-center space-x-3">
+                <span class="h-9 w-9 bg-brand-accent/15 rounded-xl flex items-center justify-center text-brand-accent">
+                  <i class="fa-solid fa-user-check"></i>
+                </span>
+                <div>
+                  <h3 class="text-sm font-bold text-white" id="modalStudentName">Nguyen Van A</h3>
+                  <p class="text-3xs text-slate-500 uppercase font-semibold" id="modalStudentDetails">PR & Comms Student</p>
+                </div>
+              </div>
+              <button onclick="closeReviewModal()" class="h-8 w-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <!-- Modal Content Area -->
+            <div class="flex-grow flex flex-col md:flex-row overflow-hidden">
+              
+              <!-- Left Side: Integrated Document Viewer (60%) -->
+              <div class="w-full md:w-3/5 border-r border-brand-border flex flex-col bg-slate-950/40">
+                <div class="px-4 py-2 border-b border-brand-border bg-slate-950/80 flex items-center justify-between text-3xs uppercase font-extrabold tracking-wider text-slate-500">
+                  <span>Simulated PDF Document Viewer</span>
+                  <div class="flex space-x-1">
+                    <button class="px-2 py-0.5 bg-slate-900 rounded border border-brand-border text-slate-300">CV &amp; Portfolio</button>
+                    <button class="px-2 py-0.5 bg-slate-900/30 rounded text-slate-500">Solution Brief</button>
+                  </div>
+                </div>
+                
+                <div class="flex-grow p-6 overflow-y-auto space-y-6 font-sans">
+                  <!-- Mock CV Layout -->
+                  <div class="bg-white text-slate-800 p-8 rounded-xl shadow-md space-y-6 max-w-2xl mx-auto border border-slate-350 min-h-[500px]">
+                    <div class="border-b-2 border-slate-800 pb-4 text-center md:text-left">
+                      <h2 class="text-2xl font-black tracking-tight" id="pdfStuName">Nguyen Van A</h2>
+                      <p class="text-xs text-brand-accent font-bold uppercase tracking-wider" id="pdfStuMajor">Public Relations &amp; Comms Major</p>
+                      <p class="text-[10px] text-slate-500 mt-1">Tel: (+84) 912345678 | Email: student_a@vanlanguni.edu.vn | HCMC, Vietnam</p>
+                    </div>
+
+                    <div class="space-y-4 text-xs">
+                      <div>
+                        <h4 class="font-extrabold uppercase text-slate-900 border-b border-slate-200 pb-1 mb-2">Executive Solution Brief Summary</h4>
+                        <p class="text-slate-700 leading-relaxed italic" id="pdfStuNotes">"This solution establishes a 3-month PR media outreach campaign utilizing localized influencers and targeted environmental storytelling to boost dairy adoption among environmentally conscious Gen Z."</p>
+                      </div>
+
+                      <div>
+                        <h4 class="font-extrabold uppercase text-slate-900 border-b border-slate-200 pb-1 mb-2">Education</h4>
+                        <div class="flex justify-between">
+                          <strong>Văn Lang University</strong>
+                          <span class="text-slate-500">GPA: 3.6 / 4.0</span>
+                        </div>
+                        <p class="text-slate-600">Bachelor of Public Relations &amp; Comms (Expected 2027)</p>
+                      </div>
+
+                      <div>
+                        <h4 class="font-extrabold uppercase text-slate-900 border-b border-slate-200 pb-1 mb-2">Resume Details / Text Summary</h4>
+                        <p class="text-slate-600 leading-relaxed whitespace-pre-line" id="pdfStuResume">Resume content details...</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Side: AI Vetting Breakdown & Action Form (40%) -->
+              <div class="w-full md:w-2/5 p-6 overflow-y-auto space-y-6 flex flex-col justify-between">
+                <div class="space-y-6">
+                  
+                  <!-- AI Vetting Score Summary -->
+                  <div class="bg-slate-950/80 p-4 rounded-xl border border-brand-border flex items-center justify-between">
+                    <div>
+                      <span class="text-3xs uppercase font-extrabold tracking-wider text-slate-500 block">AI Screening Score</span>
+                      <span class="text-3xl font-black text-brand-accent font-heading" id="modalAiScore">85</span>
+                      <span class="text-slate-500 text-xs">/ 100</span>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-3xs uppercase font-extrabold tracking-wider text-slate-500 block">Vetting Verdict</span>
+                      <span class="px-2 py-0.5 bg-brand-gold/10 text-brand-gold border border-brand-gold/20 text-3xs font-extrabold rounded uppercase inline-block mt-1">Score Approved</span>
+                    </div>
+                  </div>
+
+                  <!-- AI Feedbacks -->
+                  <div class="space-y-3">
+                    <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450">AI Vetting Evaluation</label>
+                    
+                    <div class="space-y-2">
+                      <div class="bg-slate-950/40 border border-brand-border/60 rounded-xl p-3.5 space-y-1">
+                        <span class="text-xs font-bold text-emerald-400 flex items-center"><i class="fa-solid fa-circle-check mr-2"></i>Core Strengths</span>
+                        <p class="text-[11px] text-slate-350 leading-relaxed" id="modalStrengths">Strength details...</p>
+                      </div>
+                      <div class="bg-slate-950/40 border border-brand-border/60 rounded-xl p-3.5 space-y-1">
+                        <span class="text-xs font-bold text-amber-400 flex items-center"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Areas of Improvement</span>
+                        <p class="text-[11px] text-slate-350 leading-relaxed" id="modalGaps">Gaps details...</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Manager comment area -->
+                  <div class="space-y-2">
+                    <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450">Manager Evaluation Feedback (Optional)</label>
+                    <textarea id="managerReviewComment" rows="3" placeholder="Enter comments or suggestions for the student CV/portfolio solution..." class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-accent transition-all"></textarea>
+                  </div>
+
+                </div>
+
+                <!-- Action Button Footers -->
+                <div class="flex gap-4 border-t border-brand-border pt-4 mt-4">
+                  <input type="hidden" id="reviewSubmissionId" value="">
+                  <button onclick="submitManagerReview('REJECTED')" class="flex-grow bg-slate-900 border border-slate-800 hover:bg-slate-850 hover:text-red-400 text-slate-400 font-bold py-3 px-4 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-ban"></i>
+                    <span>Reject Solution</span>
+                  </button>
+                  <button onclick="submitManagerReview('APPROVED')" class="flex-grow bg-gradient-to-r from-brand-gold to-amber-500 hover:from-amber-450 hover:to-amber-550 text-slate-950 font-bold py-3 px-4 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-lg shadow-brand-gold/10">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Approve &amp; Grant Badge</span>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== VIEW 3: UNIVERSITY ADMIN PORTAL ==================== -->
+      <div id="view-admin" class="view-container space-y-8 hidden">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-extrabold tracking-tight font-heading text-white">University Admin PR Hub & Success Story Engine</h2>
+            <p class="text-slate-400 text-xs mt-0.5">Configure your campus brand parameters and trigger AI generation to output clickbait social PR pieces from student achievements.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Column 1: Branding Guidelines setup (40%) -->
+          <div class="lg:col-span-4 space-y-6">
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-5">
+              <h3 class="text-sm font-bold font-heading text-slate-200 flex items-center">
+                <i class="fa-solid fa-sliders text-indigo-400 mr-2"></i> Campus Tone Configuration
+              </h3>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">University Voice &amp; Tone Guidelines</label>
+                  <textarea id="adminBrandingGuideline" rows="8" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-4 py-3 text-xs text-slate-200 focus:outline-none focus:border-brand-accent transition-all font-mono leading-relaxed" placeholder="Quy định về giọng điệu viết bài..."></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">Default Hashtags (Comma separated)</label>
+                  <input type="text" id="adminDefaultHashtags" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-accent transition-all font-mono" placeholder="#VLUers, #PRVLU">
+                </div>
+
+                <button onclick="saveAdminBranding()" class="w-full bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5">
+                  <i class="fa-solid fa-floppy-disk text-indigo-400"></i>
+                  <span>Save Branding Profile</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2: PR Generation table & Preview Workspace (80%) -->
+          <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Student approved directory for PR generation -->
+            <div class="glass-card rounded-3xl border border-brand-border shadow-xl overflow-hidden">
+              <div class="px-6 py-4 border-b border-brand-border flex items-center justify-between bg-slate-950/30">
+                <h3 class="text-sm font-bold font-heading text-slate-200">Approved Student Success Stories</h3>
+                <span class="text-3xs uppercase font-extrabold bg-slate-900 border border-brand-border text-slate-400 px-2 py-0.5 rounded">PR RAW MATERIALS</span>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-950/60 border-b border-brand-border text-3xs font-bold text-slate-500 uppercase tracking-widest">
+                      <th class="px-6 py-4">Student Candidate</th>
+                      <th class="px-6 py-4">Vetted Challenge</th>
+                      <th class="px-6 py-4">Corporate Badge</th>
+                      <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminPrTableBody" class="divide-y divide-slate-800/40 text-xs text-slate-350">
+                    <!-- Populated dynamically by JS -->
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="adminPrEmptyState" class="hidden text-center py-12 space-y-2">
+                <div class="text-slate-600 text-2xl"><i class="fa-solid fa-award"></i></div>
+                <h4 class="text-xs font-bold text-slate-350">No approved profiles found</h4>
+                <p class="text-[11px] text-slate-500">Wait for the Hiring Manager to approve student solutions.</p>
+              </div>
+            </div>
+
+            <!-- AI Editor & Preview Workspace (Hidden until "Generate PR" clicked) -->
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-6 hidden" id="adminPrWorkspace">
+              
+              <div class="flex items-center justify-between border-b border-brand-border pb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="h-8 w-8 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-400">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-white">AI PR Piece Editor Workspace</h3>
+                    <p class="text-3xs text-slate-500" id="resPrStudentMeta">Generating success story for Nguyen Van A</p>
+                  </div>
+                </div>
+                <button onclick="closePrWorkspace()" class="text-xs text-slate-400 hover:text-white transition-colors">Close Workspace</button>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                
+                <!-- Parameters setup (Left 35%) -->
+                <div class="md:col-span-4 space-y-4">
+                  <input type="hidden" id="prActiveSubmissionId" value="">
+                  
+                  <div>
+                    <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">Social Platform</label>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button onclick="setPrPlatform('FACEBOOK')" id="platformBtn-FACEBOOK" class="pr-platform-btn py-2 bg-brand-accent text-white font-bold text-2xs rounded-lg flex items-center justify-center space-x-1 border border-brand-accent/20">
+                        <i class="fa-brands fa-facebook"></i>
+                        <span>Facebook</span>
+                      </button>
+                      <button onclick="setPrPlatform('LINKEDIN')" id="platformBtn-LINKEDIN" class="pr-platform-btn py-2 bg-slate-900 border border-brand-border hover:bg-slate-850 text-slate-400 font-bold text-2xs rounded-lg flex items-center justify-center space-x-1">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                        <span>LinkedIn</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">Length</label>
+                    <div class="grid grid-cols-3 gap-1">
+                      <button onclick="setPrLength('SHORT')" id="lengthBtn-SHORT" class="pr-length-btn py-1.5 bg-slate-900 border border-brand-border hover:bg-slate-850 text-slate-400 text-3xs font-bold rounded-lg text-center">Short</button>
+                      <button onclick="setPrLength('MEDIUM')" id="lengthBtn-MEDIUM" class="pr-length-btn py-1.5 bg-brand-accent text-white text-3xs font-bold rounded-lg text-center border border-brand-accent/20">Medium</button>
+                      <button onclick="setPrLength('LONG')" id="lengthBtn-LONG" class="pr-length-btn py-1.5 bg-slate-900 border border-brand-border hover:bg-slate-850 text-slate-400 text-3xs font-bold rounded-lg text-center">Long</button>
+                    </div>
+                  </div>
+
+                  <button onclick="triggerPrGeneration()" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 px-4 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5 shadow-lg shadow-indigo-600/10">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>Generate Story</span>
+                  </button>
+                </div>
+
+                <!-- Post Preview (Right 65%) -->
+                <div class="md:col-span-8 space-y-4">
+                  <div class="flex items-center justify-between text-3xs uppercase font-extrabold tracking-wider text-slate-500">
+                    <span>Generated Content Preview</span>
+                    <button onclick="copyPrToClipboard()" class="text-brand-accent hover:text-rose-400 font-semibold transition-colors flex items-center">
+                      <i class="fa-solid fa-copy mr-1"></i>Copy to Clipboard
+                    </button>
+                  </div>
+
+                  <div class="bg-slate-950/80 border border-brand-border rounded-xl p-4 min-h-[180px] max-h-[300px] overflow-y-auto text-xs text-slate-300 font-sans leading-relaxed whitespace-pre-line border border-indigo-950/50" id="generatedPrOutput">
+                    AI generated success story article markdown output goes here...
+                  </div>
+
+                  <!-- Facebook Mock Display mockup layout -->
+                  <div class="bg-[#18191a] border border-[#242526] rounded-xl p-4 font-sans text-white text-xs space-y-3">
+                    <div class="flex items-center space-x-2">
+                      <div class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-200">VL</div>
+                      <div>
+                        <h5 class="font-bold text-xs" id="mockPostAuthor">Đại học Văn Lang</h5>
+                        <span class="text-[9px] text-gray-400 block">Just now · <i class="fa-solid fa-earth-americas"></i></span>
+                      </div>
+                    </div>
+                    
+                    <p class="text-xs text-gray-200 leading-relaxed whitespace-pre-line" id="mockPostContent">
+                      Facebook layout preview...
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-brand-border bg-slate-950/80 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between text-xs text-slate-500 gap-4">
+    <div>
+      <span>© 2026 Văn Lang University Career Division. Challenge Portal Vetting Engine.</span>
+    </div>
+    <div class="flex space-x-4">
+      <a href="#" class="hover:text-brand-accent transition-colors">Privacy Policy</a>
+      <a href="#" class="hover:text-brand-accent transition-colors">VLU Guidelines</a>
+      <a href="#" class="hover:text-brand-accent transition-colors">Verification Standards</a>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript App State & Logic -->
+  <script type="text/javascript">
+    
+    // Default seeded Challenges Data based on Day 3 concept spec
+    const seededChallenges = [
+      {
+        id: 1,
+        title: "Xây dựng Chiến lược PR Mạng xã hội cho sản phẩm FMCG xanh",
+        description: "Thách thức thiết kế một chiến dịch PR 3 tháng trên TikTok và Facebook cho dòng sữa hạt thuần chay mới của Vinamilk, nhắm vào thế hệ Gen Z quan tâm đến môi trường.",
+        agencyName: "Ogilvy Vietnam",
+        agencyLogo: "https://www.ogilvy.com/themes/custom/ogilvy/logo.svg",
+        skills: ["PR Campaign Planning", "TikTok Strategy", "Gen Z Market Research"],
+        status: "ACTIVE",
+        daysLeft: 12
+      },
+      {
+        id: 2,
+        title: "Thiết kế Trải nghiệm Ứng dụng Quản lý rác thải thông minh",
+        description: "Thiết kế toàn diện wireframe/UI mockup cho ứng dụng di động phân loại và báo cáo rác thải tích điểm thưởng dành cho cư dân chung cư VLU.",
+        agencyName: "Dentsu Vietnam",
+        agencyLogo: "https://www.dentsu.com/images/dentsu-logo-black.svg",
+        skills: ["UI/UX Mockups", "Figma Design", "User Flow Mapping"],
+        status: "ACTIVE",
+        daysLeft: 24
+      },
+      {
+        id: 3,
+        title: "Xây dựng Ý tưởng Chiến dịch Quảng cáo cho Bia Việt",
+        description: "Thách thức sáng tạo câu chuyện thương hiệu và định hướng thiết kế billboard, kịch bản TVC 30s truyền thông cho sản phẩm Bia Việt dịp Tết 2027.",
+        agencyName: "Dentsu Creative",
+        agencyLogo: "https://www.dentsucreative.com/favicon.ico",
+        skills: ["Creative Copywriting", "Storyboarding", "Advertising Concept"],
+        status: "ACTIVE",
+        daysLeft: 30
+      },
+      {
+        id: 4,
+        title: "Chiến dịch định vị Thương hiệu Lon giấy Tái chế Coca-Cola",
+        description: "Thiết kế kế hoạch định vị thương hiệu tích hợp (IMC) cho việc thử nghiệm dòng lon giấy tái chế sinh học 100% tại khu vực Đông Nam Á của Coca-Cola.",
+        agencyName: "Coca-Cola Southeast Asia",
+        agencyLogo: "https://www.coca-cola.com/etc.clientlibs/coca-cola/clientlibs/clientlib-site/resources/brand-logo.svg",
+        skills: ["Integrated Marketing (IMC)", "Brand Strategy", "Sustainability PR"],
+        status: "ACTIVE",
+        daysLeft: 8
+      }
+    ];
+
+    // Seeded Submissions to make demo look fully ready out-of-the-box
+    const initialSubmissions = [
+      {
+        id: 101,
+        studentName: "Nguyen Van A",
+        studentEmail: "student_a@vanlanguni.edu.vn",
+        major: "Quan hệ Công chúng (PR)",
+        challengeId: 1,
+        resumeFile: "nguyen_van_a_cv.pdf",
+        solutionFile: "vinamilk_fmcg_pr_strategy.pdf",
+        notes: "I developed a comprehensive social campaign utilizing local TikTok creators and interactive green badges.",
+        aiScore: 85,
+        aiFeedback: {
+          strengths: [
+            "Ý tưởng chiến dịch PR có tính đột phá cao, nhắm trúng hành vi dùng TikTok của Gen Z.",
+            "Phân tích thị trường sâu sắc có số liệu dẫn chứng tin cậy.",
+            "CV trình bày gọn gàng, làm rõ thế mạnh kỹ năng lập kế hoạch."
+          ],
+          gaps: [
+            "Bản dự trù ngân sách truyền thông còn khá sơ sài, thiếu chi tiết.",
+            "Phương án xử lý khủng hoảng thông tin xanh chưa được tối ưu.",
+            "Chưa làm rõ KPI đo lường cho các chiến dịch mini-event."
+          ],
+          actionSteps: [
+            "Bổ sung một phụ lục tính toán chi tiết chi phí booking influencer.",
+            "Tạo một sơ đồ phân tích ma trận đối thủ cạnh tranh PR.",
+            "Xác định rõ CTR, Engagement Rate làm cột mốc KPI đo lường chiến dịch."
+          ]
+        },
+        status: "MANAGER_PENDING", // Scored 85, waiting for human manager
+        managerComment: "",
+        submitDate: "2026-05-22"
+      },
+      {
+        id: 102,
+        studentName: "Le Minh Anh",
+        studentEmail: "le_minh_anh@vanlanguni.edu.vn",
+        major: "Digital Marketing",
+        challengeId: 4,
+        resumeFile: "le_minh_anh_marketing_portfolio.pdf",
+        solutionFile: "coca_cola_paper_can_imc.pdf",
+        notes: "An integrated campaign mapping out client acquisition funnels and sustainable PR messaging.",
+        aiScore: 92,
+        aiFeedback: {
+          strengths: [
+            "Khung kế hoạch truyền thông tích hợp (IMC) hoàn chỉnh và logic.",
+            "Có chỉ số CPA, CTR dự tính chi tiết dựa trên số liệu lịch sử.",
+            "Thiết kế tài liệu nộp vô cùng bắt mắt, chuyên nghiệp."
+          ],
+          gaps: [
+            "Kế hoạch triển khai kênh PR báo chí có phần mờ nhạt hơn digital.",
+            "Phân khúc khách hàng mục tiêu hơi rộng, cần cô đọng.",
+            "Thiếu kế hoạch dự phòng rủi ro chuỗi cung ứng sản phẩm."
+          ],
+          actionSteps: [
+            "Phát triển thêm kịch bản PR báo chí truyền hình truyền thống.",
+            "Thu hẹp phân khúc mục tiêu vào thế hệ trẻ thành thị (Ages 18-25).",
+            "Bổ sung phần đánh giá rủi ro thương hiệu khi có sự cố truyền thông."
+          ]
+        },
+        status: "APPROVED", // Scored 92, approved by manager
+        managerComment: "Excellent strategic plan! This is direct industry standard execution. Highly approved.",
+        submitDate: "2026-05-20"
+      },
+      {
+        id: 103,
+        studentName: "Tran Hoang Nam",
+        studentEmail: "tran_hoang_nam@vanlanguni.edu.vn",
+        major: "Graphic Design & Multimedia",
+        challengeId: 2,
+        resumeFile: "nam_tran_portfolio.pdf",
+        solutionFile: "smart_garbage_ux_wireframes.pdf",
+        notes: "Detailed Figma flows and interface design structures for the green app challenge.",
+        aiScore: 72,
+        aiFeedback: {
+          strengths: [
+            "Giao diện thiết kế có tính thẩm mỹ rất cao, phối màu xanh hiện đại.",
+            "User flow trực quan, rõ ràng các bước thực hiện.",
+            "CV thể hiện nhiều dự án thiết kế sáng tạo cá nhân xuất sắc."
+          ],
+          gaps: [
+            "Thiếu các nghiên cứu người dùng (User Research) làm cơ sở thiết kế.",
+            "Không giải thích các nút bấm chức năng ở trang Dashboard chi tiết.",
+            "Font chữ hiển thị hơi nhỏ ở một số góc màn hình mobile."
+          ],
+          actionSteps: [
+            "Thực hiện khảo sát 5-10 người dùng mẫu về tính năng app.",
+            "Bổ sung một slide giải thích cặn kẽ hệ thống lưới tỷ lệ UX.",
+            "Tăng kích cỡ font chữ trên các nhãn nút bấm lên tối thiểu 12px."
+          ]
+        },
+        status: "COMPLETED", // Scored 72, not eligible for manager review
+        managerComment: "",
+        submitDate: "2026-05-21"
+      },
+      {
+        id: 104,
+        studentName: "Pham Quynh Huong",
+        studentEmail: "quynh_huong_pr@vanlanguni.edu.vn",
+        major: "Quan hệ Công chúng (PR)",
+        challengeId: 1,
+        resumeFile: "quynh_huong_resume.pdf",
+        solutionFile: "vinamilk_pr_pr_strategy.pdf",
+        notes: "Influencer marketing proposal focused on Gen Z sustainability lifestyle influencers.",
+        aiScore: 89,
+        aiFeedback: {
+          strengths: [
+            "Kế hoạch truyền thông thông điệp rõ ràng, nhân văn.",
+            "Đo lường KPI tương tác chi tiết từng kênh cụ thể.",
+            "Kinh nghiệm làm phó ban truyền thông CLB sinh viên xịn."
+          ],
+          gaps: [
+            "Ý tưởng sự kiện thực tế còn khá tốn kém, thiếu thực tế.",
+            "Phần thuyết minh ngân sách chưa làm rõ cơ sở định giá.",
+            "Thiếu sự sáng tạo về mặt giải pháp truyền thông đột phá."
+          ],
+          actionSteps: [
+            "Điều chỉnh ngân sách sự kiện hợp lý, giảm 30% chi phí dự kiến.",
+            "Cung cấp báo giá tham khảo thị trường cho các gói KOLs.",
+            "Bổ sung một chiến dịch độc đáo hơn thay vì chỉ làm workshop."
+          ]
+        },
+        status: "REJECTED", // Scored 89, rejected by manager with comment
+        managerComment: "Although AI rating is high, your campaign ideas exceed real university budgets. Needs refinement in practicality.",
+        submitDate: "2026-05-19"
+      }
+    ];
+
+    // Mock student demo template files content
+    const studentMockTemplates = {
+      'marketing-elite': {
+        name: "Hoang Lam Nguyen",
+        major: "Digital Marketing",
+        email: "lam_nguyen_mkt@vanlanguni.edu.vn",
+        resumeFile: "lam_nguyen_marketing_cv.pdf",
+        solutionFile: "coca_cola_green_digital_imc.pdf",
+        notes: "Detailed digital funnel design featuring SEO, Google PPC structured bids, and conversions targeted at green consumers.",
+        resumeText: "Digital Marketing Senior at VLU. Specialized in analytics and ad funnel structures. Certified in Google Ads. Past experience running social media funnels with a 15% increase in conversion rates."
+      },
+      'pr-elite': {
+        name: "Le Minh Anh",
+        major: "Quan hệ Công chúng (PR)",
+        email: "le_minh_anh@vanlanguni.edu.vn",
+        resumeFile: "le_minh_anh_pr_cv.pdf",
+        solutionFile: "vinamilk_social_pr_campaign.pdf",
+        notes: "3-month social PR communications strategy plan for Vinamilk Green brand launch. Focuses on storytelling and positive brand sentiment tracking.",
+        resumeText: "PR Senior student. Past experience writing press releases and organizing media launch events. Organized a major environmental charity music event with 1,500+ attendees."
+      },
+      'design-low': {
+        name: "Hoang Lam Nguyen",
+        major: "Graphic Design & Multimedia",
+        email: "lam_design@vanlanguni.edu.vn",
+        resumeFile: "lam_art_portfolio.pdf",
+        solutionFile: "garbage_recycling_ux_brief.pdf",
+        notes: "Basic wireframes representing garbage reporting screens. Simple design templates made for classes.",
+        resumeText: "Design enthusiast and VLU Graphic Design senior. Love drawing digital assets and personal illustrations. Completed standard graphic course assignments."
+      }
+    };
+
+    // University Admin default branding configurations
+    const defaultBranding = {
+      universityName: "Đại học Văn Lang",
+      guidelineText: "Giọng điệu: Hào hứng, tự hào, truyền cảm hứng cho thế hệ trẻ. Luôn dùng 'VLUers' hoặc 'Sinh viên Văn Lang' để chỉ sinh viên. Nhấn mạnh việc học đi đôi với hành. Tận dụng các từ kích thích sự tự hào, thực chiến chuyên môn, cơ hội rộng mở.",
+      defaultHashtags: "#VanLangUniversity #ReadyToShine #CreativeChallenge #AgencyReady #VLUers"
+    };
+
+    // In-memory active database (state)
+    let state = {
+      currentUserRole: 'student', // 'student', 'manager', 'admin'
+      currentView: 'student', // 'student', 'manager', 'admin'
+      activePlatform: 'FACEBOOK', // 'FACEBOOK', 'LINKEDIN'
+      activeLength: 'MEDIUM', // 'SHORT', 'MEDIUM', 'LONG'
+      selectedChallengeId: null,
+      submissions: [],
+      branding: {}
+    };
+
+    // Initialize state
+    function initDatabase() {
+      const stored = localStorage.getItem('vlu_challenge_portal_state');
+      if (stored) {
+        state = JSON.parse(stored);
+      } else {
+        state.submissions = [...initialSubmissions];
+        state.branding = {...defaultBranding};
+        saveDatabase();
+      }
+      
+      // Auto fill inputs in Admin Panel on start
+      document.getElementById('adminBrandingGuideline').value = state.branding.guidelineText;
+      document.getElementById('adminDefaultHashtags').value = state.branding.defaultHashtags;
+      
+      refreshGlobalUI();
+    }
+
+    function saveDatabase() {
+      localStorage.setItem('vlu_challenge_portal_state', JSON.stringify(state));
+    }
+
+    // Role switching & dynamic navigation generation
+    function switchRole(role) {
+      state.currentUserRole = role;
+      state.currentView = role;
+      
+      // Update role buttons
+      document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.classList.remove('bg-brand-accent', 'text-white', 'shadow-lg');
+        btn.classList.add('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+      });
+      const activeBtn = document.getElementById(`roleBtn-${role}`);
+      activeBtn.classList.remove('text-slate-400', 'hover:text-slate-200', 'hover:bg-slate-800');
+      activeBtn.classList.add('bg-brand-accent', 'text-white', 'shadow-lg');
+
+      // Hide all main containers
+      document.querySelectorAll('.view-container').forEach(view => {
+        view.classList.add('hidden');
+        view.classList.remove('block');
+      });
+
+      // Show current container
+      const currentViewContainer = document.getElementById(`view-${role}`);
+      if (currentViewContainer) {
+        currentViewContainer.classList.remove('hidden');
+        currentViewContainer.classList.add('block');
+      }
+
+      // Generate Navigation Items in Sidebar
+      renderSidebarNavigation();
+      
+      // Reset UI states
+      if (role === 'student') {
+        backToDirectory();
+      } else if (role === 'manager') {
+        renderManagerTable();
+      } else if (role === 'admin') {
+        renderAdminPrTable();
+        closePrWorkspace();
+      }
+
+      saveDatabase();
+    }
+
+    // Render navigation list on Sidebar depending on Active Role
+    function renderSidebarNavigation() {
+      const container = document.getElementById('dynamicNavContainer');
+      container.innerHTML = '';
+      
+      let navItems = [];
+      if (state.currentUserRole === 'student') {
+        navItems = [
+          { icon: 'fa-graduation-cap', label: 'Challenges Directory', action: 'backToDirectory()' },
+          { icon: 'fa-square-poll-horizontal', label: 'My Submissions', action: 'showStudentResultsPage()' }
+        ];
+      } else if (state.currentUserRole === 'manager') {
+        navItems = [
+          { icon: 'fa-table-list', label: 'Verification Queue', action: 'switchRole("manager")' }
+        ];
+      } else if (state.currentUserRole === 'admin') {
+        navItems = [
+          { icon: 'fa-bullhorn', label: 'PR Success Hub', action: 'switchRole("admin")' },
+          { icon: 'fa-sliders', label: 'Campus Branding', action: 'switchViewTab("view-admin")' }
+        ];
+      }
+
+      navItems.forEach(item => {
+        const btn = document.createElement('button');
+        btn.onclick = () => eval(item.action);
+        btn.className = "nav-item-btn w-full px-4 py-3 rounded-xl text-left text-xs font-semibold flex items-center space-x-3 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-all";
+        btn.innerHTML = `<i class="fa-solid ${item.icon} text-sm"></i> <span>${item.label}</span>`;
+        container.appendChild(btn);
+      });
+    }
+
+    // Refresh Global Counters displayed in UI
+    function refreshGlobalUI() {
+      const total = state.submissions.length;
+      const approved = state.submissions.filter(s => s.status === 'APPROVED').length;
+      const prs = state.submissions.filter(s => s.status === 'APPROVED').length; // Mock PR counts same as approved
+
+      // Sidebar widgets
+      document.getElementById('sidebar-total').innerText = total;
+      document.getElementById('sidebar-badges').innerText = approved;
+      document.getElementById('sidebar-stories').innerText = prs;
+
+      // Student page widget badges count
+      document.getElementById('student-badge-count').innerText = approved;
+    }
+
+    /* ==================== STUDENT WORKSPACE LOGIC ==================== */
+
+    // Load directory challenges
+    function renderChallengeDirectory() {
+      const container = document.getElementById('challengeGridContainer');
+      container.innerHTML = '';
+
+      seededChallenges.forEach(ch => {
+        const card = document.createElement('div');
+        card.className = "glass-card rounded-3xl p-5 border border-brand-border hover:border-brand-accent/40 shadow-lg hover:shadow-brand-accent/5 transition-all flex flex-col justify-between space-y-4 group";
+        
+        let tagsHtml = ch.skills.map(s => `<span class="px-2 py-0.5 bg-slate-900 border border-slate-800 rounded text-3xs font-semibold text-slate-400">${s}</span>`).join(' ');
+
+        card.innerHTML = `
+          <div class="space-y-3">
+            <div class="flex items-start justify-between border-b border-brand-border/60 pb-3">
+              <div class="flex items-center space-x-2.5">
+                <div class="h-8 w-8 bg-slate-950 rounded-lg flex items-center justify-center font-bold text-white border border-brand-border overflow-hidden">
+                  <span class="text-xs uppercase font-extrabold">${ch.agencyName.substring(0,2)}</span>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-slate-200 group-hover:text-brand-accent transition-colors truncate max-w-[200px]">${ch.title}</h4>
+                  <span class="text-[10px] text-slate-450">${ch.agencyName}</span>
+                </div>
+              </div>
+              <span class="px-1.5 py-0.5 bg-brand-accent/15 text-brand-accent border border-brand-accent/20 rounded text-[9px] font-bold uppercase">${ch.daysLeft} days left</span>
+            </div>
+            
+            <p class="text-xxs text-slate-400 leading-relaxed line-clamp-3">${ch.description}</p>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t border-brand-border/40 mt-auto">
+            <div class="flex flex-wrap gap-1 max-w-[70%]">
+              ${tagsHtml}
+            </div>
+            <button onclick="openChallengeDetails(${ch.id})" class="px-3.5 py-1.5 bg-slate-900 hover:bg-brand-accent hover:text-white border border-brand-border hover:border-brand-accent rounded-lg text-xxs font-bold text-slate-300 transition-all flex items-center">
+              Solve Brief <i class="fa-solid fa-arrow-right ml-1.5 text-[10px]"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Toggle showing challenge details view
+    function openChallengeDetails(challengeId) {
+      state.selectedChallengeId = challengeId;
+      const ch = seededChallenges.find(c => c.id === challengeId);
+      if(!ch) return;
+
+      document.getElementById('studentChallengeDirectory').classList.add('hidden');
+      document.getElementById('studentSubmissionSection').classList.remove('hidden');
+      document.getElementById('studentResultsDashboard').classList.add('hidden');
+
+      // Populate Details view
+      document.getElementById('detailChallengeTitle').innerText = ch.title;
+      document.getElementById('detailAgencyName').innerText = ch.agencyName;
+      document.getElementById('detailChallengeDesc').innerText = ch.description;
+      document.getElementById('detailAgencyLogo').src = ch.agencyLogo;
+      document.getElementById('submitChallengeId').value = ch.id;
+
+      // Populate skills tags
+      const skillsContainer = document.getElementById('detailSkillsContainer');
+      skillsContainer.innerHTML = ch.skills.map(s => `<span class="px-2 py-0.5 bg-slate-900 border border-slate-800 rounded text-3xs font-semibold text-slate-400">${s}</span>`).join(' ');
+
+      // Reset Form fields
+      document.getElementById('stu-name').value = '';
+      document.getElementById('stu-email').value = '';
+      document.getElementById('stu-notes').value = '';
+      document.getElementById('stu-cv-file').value = '';
+      document.getElementById('stu-sol-file').value = '';
+
+      // Reset mock file upload visuals
+      document.getElementById('cvSuccess').classList.add('hidden');
+      document.getElementById('cvEmpty').classList.remove('hidden');
+      document.getElementById('solSuccess').classList.add('hidden');
+      document.getElementById('solEmpty').classList.remove('hidden');
+
+      saveDatabase();
+    }
+
+    // Handle student mock file selection visual updates
+    function handleFileSelected(inputEl, labelId, emptyId, successId) {
+      const file = inputEl.files[0];
+      if (file) {
+        document.getElementById(labelId).innerText = file.name;
+        document.getElementById(emptyId).classList.add('hidden');
+        document.getElementById(successId).classList.remove('hidden');
+      }
+    }
+
+    // Return back to directory list
+    function backToDirectory() {
+      document.getElementById('studentChallengeDirectory').classList.remove('hidden');
+      document.getElementById('studentSubmissionSection').classList.add('hidden');
+      document.getElementById('studentResultsDashboard').classList.add('hidden');
+    }
+
+    // Load mock templates in the submission form
+    function loadMockStudentTemplate(type) {
+      const template = studentMockTemplates[type];
+      if (!template) return;
+
+      document.getElementById('stu-name').value = template.name;
+      document.getElementById('stu-major').value = template.major;
+      document.getElementById('stu-email').value = template.email;
+      document.getElementById('stu-notes').value = template.notes;
+
+      // Mock file upload names representations
+      document.getElementById('cvFileName').innerText = template.resumeFile;
+      document.getElementById('cvEmpty').classList.add('hidden');
+      document.getElementById('cvSuccess').classList.remove('hidden');
+
+      document.getElementById('solFileName').innerText = template.solutionFile;
+      document.getElementById('solEmpty').classList.add('hidden');
+      document.getElementById('solSuccess').classList.remove('hidden');
+    }
+
+    // Handle form submit and trigger simulated scan
+    function handleChallengeSubmit(event) {
+      event.preventDefault();
+
+      const name = document.getElementById('stu-name').value.trim();
+      const email = document.getElementById('stu-email').value.trim();
+      const major = document.getElementById('stu-major').value;
+      const notes = document.getElementById('stu-notes').value.trim();
+      const challengeId = parseInt(document.getElementById('submitChallengeId').value);
+
+      if(!name || !email) {
+        alert("Please fill in required submission fields.");
+        return;
+      }
+
+      // Check if simulated uploads are selected
+      const cvLabel = document.getElementById('cvFileName').innerText;
+      const solLabel = document.getElementById('solFileName').innerText;
+      if (cvLabel === 'cv.pdf' || solLabel === 'sol.pdf') {
+        alert("Please upload both your CV/Portfolio and Challenge Solution PDF.");
+        return;
+      }
+
+      // Open AI scanner overlay
+      const overlay = document.getElementById('aiScannerOverlay');
+      overlay.classList.remove('hidden');
+
+      let progress = 0;
+      const progressBar = document.getElementById('scanProgressBar');
+      const progressPercent = document.getElementById('scanPercent');
+      const consoleLog = document.getElementById('scanConsole');
+
+      const logs = [
+        "Analyzing work experiences & portfolio structure...",
+        "Validating challenge solution briefs against agency rubrics...",
+        "Running metrics calculation on marketing conversion plans...",
+        "Validating typography layout and overall brief readability...",
+        "Finalizing vetting parameters. Compiling evaluation report..."
+      ];
+
+      const interval = setInterval(() => {
+        progress += 4;
+        progressBar.style.width = progress + '%';
+        progressPercent.innerText = progress + '%';
+
+        const logIndex = Math.min(Math.floor(progress / 20), logs.length - 1);
+        consoleLog.innerText = logs[logIndex];
+
+        if(progress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            overlay.classList.add('hidden');
+            
+            // Execute simulated AI calculation logic
+            evaluateStudentSubmission(name, email, major, notes, challengeId, cvLabel, solLabel);
+          }, 600);
+        }
+      }, 100);
+    }
+
+    // Vetting calculation logic
+    function evaluateStudentSubmission(name, email, major, notes, challengeId, cvLabel, solLabel) {
+      const ch = seededChallenges.find(c => c.id === challengeId);
+      if(!ch) return;
+
+      // Score heuristics calculation based on notes/data
+      let rawScore = 65; // base
+      if (notes.toLowerCase().includes("roi") || notes.toLowerCase().includes("seo") || notes.toLowerCase().includes("conversion")) rawScore += 10;
+      if (notes.toLowerCase().includes("figma") || notes.toLowerCase().includes("mockup") || notes.toLowerCase().includes("wireframe")) rawScore += 8;
+      if (notes.length > 50) rawScore += 5;
+
+      // Cap score
+      const finalScore = Math.min(rawScore, 98);
+      
+      // Determine feedbacks
+      let strengths = [
+        "Ý tưởng đề xuất thực tế, giải quyết được cốt lõi yêu cầu từ brief của doanh nghiệp.",
+        "Cấu trúc tài liệu mạch lạc, rõ ràng các bước thực thi chiến dịch.",
+        "CV thể hiện có năng lực chuyên môn và tư duy chủ động tốt."
+      ];
+      let gaps = [
+        "Phần thuyết minh ngân sách cần làm rõ chi phí cho các kênh truyền thông phụ.",
+        "Thiếu kế hoạch ứng phó khủng hoảng nếu xảy ra sự cố truyền thông.",
+        "Kế hoạch đo lường hiệu suất (KPI) cần bổ sung thêm các tỷ lệ chuyển đổi số cụ thể."
+      ];
+      let actionSteps = [
+        "Chi tiết hóa bảng dự trù tài chính, đính kèm giá tham khảo KOLs.",
+        "Bổ sung một mục phân tích ma trận rủi ro và các kịch bản đối phó.",
+        "Đặt ra các mục tiêu rõ ràng về CTR, reach, conversion rate cho từng kênh."
+      ];
+
+      if (major.includes("Design")) {
+        strengths = [
+          "Giao diện thiết kế có tính thẩm mỹ rất cao, hợp xu hướng hiện đại.",
+          "Cấu trúc các khối thành phần trực quan, hỗ trợ trải nghiệm người dùng tốt.",
+          "Figma file tổ chức gọn gàng, hệ thống màu sắc có chủ đích."
+        ];
+        gaps = [
+          "Thiếu các nghiên cứu người dùng (User research) làm cơ sở cho thiết kế.",
+          "Font chữ hiển thị hơi nhỏ ở một số nhãn nút bấm mobile.",
+          "Chưa làm rõ phương án hoạt động của trang Dashboard chi tiết."
+        ];
+        actionSteps = [
+          "Thực hiện khảo sát mẫu 5-10 người dùng thực tế.",
+          "Tăng kích cỡ font chữ các nhãn lên tối thiểu 12px.",
+          "Bổ sung một trang chi tiết thuyết minh các phím bấm tương tác."
+        ];
+      }
+
+      const isApproved = finalScore >= 80;
+      
+      const newSubmission = {
+        id: state.submissions.length + 101,
+        studentName: name,
+        studentEmail: email,
+        major: major,
+        challengeId: challengeId,
+        resumeFile: cvLabel,
+        solutionFile: solLabel,
+        notes: notes,
+        aiScore: finalScore,
+        aiFeedback: {
+          strengths: strengths,
+          gaps: gaps,
+          actionSteps: actionSteps
+        },
+        status: isApproved ? "MANAGER_PENDING" : "AI_SCREENED",
+        managerComment: "",
+        submitDate: new Date().toISOString().split('T')[0]
+      };
+
+      state.submissions.push(newSubmission);
+      saveDatabase();
+      refreshGlobalUI();
+
+      // Show results dashboard
+      renderStudentResults(newSubmission);
+    }
+
+    // Populate and show student results panel
+    function renderStudentResults(sub) {
+      const ch = seededChallenges.find(c => c.id === sub.challengeId);
+      if(!ch) return;
+
+      document.getElementById('studentChallengeDirectory').classList.add('hidden');
+      document.getElementById('studentSubmissionSection').classList.add('hidden');
+      document.getElementById('studentResultsDashboard').classList.remove('hidden');
+
+      // Populate header details
+      document.getElementById('res-challenge-title').innerText = ch.title;
+      document.getElementById('res-score-text').innerText = sub.aiScore;
+
+      // Update ring animation
+      const ring = document.getElementById('res-score-ring');
+      const offset = 351.8 - (351.8 * sub.aiScore) / 100;
+      ring.style.strokeDashoffset = offset;
+
+      // Colors based on score
+      if (sub.aiScore >= 80) {
+        ring.setAttribute('stroke', '#fbbf24'); // Gold
+      } else {
+        ring.setAttribute('stroke', '#818cf8'); // Indigo
+      }
+
+      // Status messages
+      const statusBadge = document.getElementById('res-status-badge');
+      const msgBox = document.getElementById('res-status-message-box');
+      const msgText = document.getElementById('res-status-message-text');
+
+      // Setup Badging display states
+      const lockedState = document.getElementById('badgeLockedState');
+      const pendingState = document.getElementById('badgePendingState');
+      const unlockedState = document.getElementById('badgeUnlockedState');
+
+      lockedState.classList.add('hidden');
+      pendingState.classList.add('hidden');
+      unlockedState.classList.add('hidden');
+
+      if (sub.status === 'APPROVED') {
+        statusBadge.innerText = "APPROVED & CERTIFIED";
+        statusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-2xs font-extrabold tracking-wider uppercase border border-brand-gold bg-brand-gold/10 text-brand-gold";
+        msgBox.className = "rounded-xl p-3 text-xs border border-brand-gold/20 bg-brand-gold/5 text-brand-gold";
+        msgText.innerHTML = `<strong>Thử thách hoàn tất!</strong> Chuyên gia doanh nghiệp đã phê duyệt hồ sơ và năng lực thực chiến của bạn. Huy hiệu chuyên môn tương ứng đã được cấp.`;
+        
+        unlockedState.classList.remove('hidden');
+        document.getElementById('badgeChallengeName').innerText = ch.title.split(' ').slice(0,3).join(' ');
+        document.getElementById('badgeAgencyBrand').innerText = ch.agencyName + " Certified";
+      } 
+      else if (sub.status === 'REJECTED') {
+        statusBadge.innerText = "NOT APPROVED";
+        statusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-2xs font-extrabold tracking-wider uppercase border border-red-500 bg-red-500/10 text-red-400";
+        msgBox.className = "rounded-xl p-3 text-xs border border-red-500/20 bg-red-500/5 text-red-400";
+        msgText.innerHTML = `<strong>Chưa đạt xác thực.</strong> Doanh nghiệp đã đánh giá bài nộp và từ chối cấp badge đợt này. Nhận xét: <em>"${sub.managerComment}"</em>. Hãy xem lại các bước hành động đề xuất của AI để cải thiện bài nộp nhé.`;
+        
+        lockedState.classList.remove('hidden');
+      }
+      else if (sub.aiScore >= 80) {
+        statusBadge.innerText = "PENDING CORPORATE VETTING";
+        statusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-2xs font-extrabold tracking-wider uppercase border border-indigo-400 bg-indigo-500/10 text-indigo-450";
+        msgBox.className = "rounded-xl p-3 text-xs border border-indigo-500/20 bg-indigo-500/5 text-indigo-300";
+        msgText.innerHTML = `<strong>Đạt chuẩn đánh giá AI!</strong> Bạn đã vượt qua cột mốc 80 điểm từ AI. Bài làm đã được gửi cho đối tác doanh nghiệp <strong>${ch.agencyName}</strong> xác thực để trao huy hiệu số.`;
+        
+        pendingState.classList.remove('hidden');
+      } 
+      else {
+        statusBadge.innerText = "STANDARD COMPLETED";
+        statusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-2xs font-extrabold tracking-wider uppercase border border-slate-700 bg-slate-800 text-slate-400";
+        msgBox.className = "rounded-xl p-3 text-xs border border-slate-800 bg-slate-900/50 text-slate-400";
+        msgText.innerHTML = `<strong>Đã chấm điểm.</strong> Điểm AI của bạn chưa đạt yêu cầu 80+ để gửi cho doanh nghiệp duyệt. Vui lòng tối ưu hóa bài giải dựa trên đề xuất dưới đây và nộp lại sau nhé.`;
+        
+        lockedState.classList.remove('hidden');
+      }
+
+      // Populate AI lists
+      document.getElementById('res-strengths-list').innerHTML = sub.aiFeedback.strengths.map(s => `<li>${s}</li>`).join('');
+      document.getElementById('res-gaps-list').innerHTML = sub.aiFeedback.gaps.map(g => `<li>${g}</li>`).join('');
+      document.getElementById('res-actions-list').innerHTML = sub.aiFeedback.actionSteps.map(a => `<li>${a}</li>`).join('');
+    }
+
+    // Sidebar trigger to show student's latest result or table of results
+    function showStudentResultsPage() {
+      const latest = state.submissions[state.submissions.length - 1];
+      if (latest) {
+        renderStudentResults(latest);
+      } else {
+        alert("You have not submitted any challenges yet.");
+      }
+    }
+
+    function shareOnLinkedIn() {
+      alert("LinkedIn Share API Triggered!\nSharing 'Agency-Ready Specialist Badge' to your LinkedIn profile feed.");
+    }
+
+
+    /* ==================== HIRING MANAGER WORKSPACE LOGIC ==================== */
+
+    // Load challenges dropdown for filters
+    function loadManagerFilters() {
+      const select = document.getElementById('managerFilterChallenge');
+      select.innerHTML = '<option value="ALL">All Challenges</option>';
+      seededChallenges.forEach(ch => {
+        select.innerHTML += `<option value="${ch.id}">${ch.title}</option>`;
+      });
+    }
+
+    // Render verification table list
+    function renderManagerTable() {
+      loadManagerFilters();
+      const tbody = document.getElementById('managerTableBody');
+      const emptyState = document.getElementById('managerEmptyState');
+      tbody.innerHTML = '';
+
+      const challengeFilter = document.getElementById('managerFilterChallenge').value;
+
+      // Filter only submissions with score >= 80
+      const filtered = state.submissions.filter(sub => {
+        const meetsScore = sub.aiScore >= 80;
+        const matchesChallenge = challengeFilter === 'ALL' || sub.challengeId === parseInt(challengeFilter);
+        return meetsScore && matchesChallenge;
+      });
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+
+        filtered.forEach(sub => {
+          const ch = seededChallenges.find(c => c.id === sub.challengeId);
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-900/30 transition-colors border-b border-brand-border/40";
+          
+          let statusCol = "";
+          if (sub.status === 'APPROVED') {
+            statusCol = `<span class="inline-flex items-center px-2 py-0.5 rounded text-3xs font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1"></i>Approved</span>`;
+          } else if (sub.status === 'REJECTED') {
+            statusCol = `<span class="inline-flex items-center px-2 py-0.5 rounded text-3xs font-extrabold bg-red-500/10 text-red-400 border border-red-500/20"><i class="fa-solid fa-circle-xmark mr-1"></i>Rejected</span>`;
+          } else {
+            statusCol = `<span class="inline-flex items-center px-2 py-0.5 rounded text-3xs font-extrabold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 animate-pulse"><i class="fa-solid fa-hourglass-half mr-1"></i>Pending Review</span>`;
+          }
+
+          tr.innerHTML = `
+            <td class="px-6 py-4">
+              <div class="flex items-center space-x-2.5">
+                <div class="h-7 w-7 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-white text-[10px]">
+                  ${sub.studentName.split(' ').map(n=>n[0]).join('')}
+                </div>
+                <div>
+                  <span class="font-bold text-slate-100 block">${sub.studentName}</span>
+                  <span class="text-[10px] text-slate-500">${sub.major}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="font-semibold text-slate-350 block truncate max-w-[200px]" title="${ch ? ch.title : ''}">${ch ? ch.title : 'Challenge'}</span>
+              <span class="text-[9px] text-slate-500">${ch ? ch.agencyName : ''}</span>
+            </td>
+            <td class="px-6 py-4 font-bold text-brand-gold">${sub.aiScore}</td>
+            <td class="px-6 py-4">${statusCol}</td>
+            <td class="px-6 py-4 text-right">
+              <button onclick="openReviewModal(${sub.id})" class="px-3 py-1.5 bg-slate-900 hover:bg-brand-accent hover:text-white rounded-lg text-slate-400 font-bold transition-all border border-brand-border hover:border-brand-accent text-3xs uppercase">
+                Review Details
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    // Open review modal
+    function openReviewModal(submissionId) {
+      const sub = state.submissions.find(s => s.id === submissionId);
+      if(!sub) return;
+
+      document.getElementById('splitReviewModal').classList.remove('hidden');
+      
+      // Populate fields
+      document.getElementById('modalStudentName').innerText = sub.studentName;
+      document.getElementById('modalStudentDetails').innerText = sub.major + " · " + sub.studentEmail;
+      
+      // Mock PDF view content
+      document.getElementById('pdfStuName').innerText = sub.studentName;
+      document.getElementById('pdfStuMajor').innerText = sub.major;
+      document.getElementById('pdfStuNotes').innerText = `"${sub.notes || 'No description summary provided.'}"`;
+      document.getElementById('pdfStuResume').innerText = `Resume file reference: ${sub.resumeFile}\nSolution Brief reference: ${sub.solutionFile}\nSubmitted: ${sub.submitDate}\n\nEXPERIENCE SUMMARY:\n- Academic projects completed under University curriculum.\n- Worked in teams to structure client proposals.\n- Experienced in digital execution loops and campaign reporting structure.`;
+
+      document.getElementById('modalAiScore').innerText = sub.aiScore;
+      document.getElementById('reviewSubmissionId').value = sub.id;
+      document.getElementById('managerReviewComment').value = sub.managerComment;
+
+      // Populate AI text
+      document.getElementById('modalStrengths').innerText = sub.aiFeedback.strengths.join('\n');
+      document.getElementById('modalGaps').innerText = sub.aiFeedback.gaps.join('\n');
+    }
+
+    function closeReviewModal() {
+      document.getElementById('splitReviewModal').classList.add('hidden');
+    }
+
+    // Submit corporate manager decision
+    function submitManagerReview(actionStatus) {
+      const subId = parseInt(document.getElementById('reviewSubmissionId').value);
+      const sub = state.submissions.find(s => s.id === subId);
+      if(!sub) return;
+
+      const comment = document.getElementById('managerReviewComment').value.trim();
+
+      // Update state
+      sub.status = actionStatus;
+      sub.managerComment = comment;
+
+      saveDatabase();
+      refreshGlobalUI();
+      closeReviewModal();
+      renderManagerTable();
+
+      if(actionStatus === 'APPROVED') {
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          colors: ['#fbbf24', '#818cf8', '#f43f5e']
+        });
+      }
+
+      alert(`Review processed. Submission has been ${actionStatus}.`);
+    }
+
+    /* ==================== UNIVERSITY ADMIN PORTAL LOGIC ==================== */
+
+    // Save branding guidelines
+    function saveAdminBranding() {
+      const guide = document.getElementById('adminBrandingGuideline').value.trim();
+      const tags = document.getElementById('adminDefaultHashtags').value.trim();
+
+      state.branding.guidelineText = guide;
+      state.branding.defaultHashtags = tags;
+
+      saveDatabase();
+      alert("University branding configurations saved successfully!");
+    }
+
+    // Render approved student table for PR generation
+    function renderAdminPrTable() {
+      const tbody = document.getElementById('adminPrTableBody');
+      const emptyState = document.getElementById('adminPrEmptyState');
+      tbody.innerHTML = '';
+
+      // Load approved stories only
+      const approved = state.submissions.filter(s => s.status === 'APPROVED');
+
+      if (approved.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+
+        approved.forEach(sub => {
+          const ch = seededChallenges.find(c => c.id === sub.challengeId);
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-900/30 transition-colors border-b border-brand-border/40";
+
+          tr.innerHTML = `
+            <td class="px-6 py-4">
+              <span class="font-bold text-slate-100 block">${sub.studentName}</span>
+              <span class="text-[10px] text-slate-500">${sub.major}</span>
+            </td>
+            <td class="px-6 py-4 font-semibold text-slate-350">${ch ? ch.title : 'Challenge'}</td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-3xs font-extrabold bg-brand-gold/15 text-brand-gold border border-brand-gold/30">
+                <i class="fa-solid fa-award mr-1"></i>Vetting Approved
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button onclick="openPrWorkspace(${sub.id})" class="px-3.5 py-1.5 bg-indigo-950/40 hover:bg-indigo-600 hover:text-white rounded-lg text-indigo-400 font-bold transition-all border border-indigo-900/40 hover:border-indigo-600 text-3xs uppercase flex items-center space-x-1 ml-auto">
+                <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
+                <span>Generate PR</span>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    // Toggle showing PR Generator Workspace Editor
+    function openPrWorkspace(submissionId) {
+      const sub = state.submissions.find(s => s.id === submissionId);
+      if(!sub) return;
+
+      document.getElementById('adminPrWorkspace').classList.remove('hidden');
+      document.getElementById('prActiveSubmissionId').value = sub.id;
+      document.getElementById('resPrStudentMeta').innerText = `Generating success story for ${sub.studentName} (${sub.major})`;
+
+      // Load parameters
+      state.activePlatform = 'FACEBOOK';
+      state.activeLength = 'MEDIUM';
+      
+      updatePrToggleStyles();
+      triggerPrGeneration();
+    }
+
+    function closePrWorkspace() {
+      document.getElementById('adminPrWorkspace').classList.add('hidden');
+    }
+
+    // UI platforms triggers
+    function setPrPlatform(platform) {
+      state.activePlatform = platform;
+      updatePrToggleStyles();
+      triggerPrGeneration();
+    }
+
+    function setPrLength(len) {
+      state.activeLength = len;
+      updatePrToggleStyles();
+      triggerPrGeneration();
+    }
+
+    function updatePrToggleStyles() {
+      // Platform btns styling
+      document.querySelectorAll('.pr-platform-btn').forEach(btn => {
+        btn.className = "pr-platform-btn py-2 bg-slate-900 border border-brand-border hover:bg-slate-850 text-slate-400 font-bold text-2xs rounded-lg flex items-center justify-center space-x-1 w-full";
+      });
+      const activePBtn = document.getElementById(`platformBtn-${state.activePlatform}`);
+      activePBtn.className = "pr-platform-btn py-2 bg-brand-accent text-white font-bold text-2xs rounded-lg flex items-center justify-center space-x-1 w-full border border-brand-accent/20";
+
+      // Length buttons styling
+      document.querySelectorAll('.pr-length-btn').forEach(btn => {
+        btn.className = "pr-length-btn py-1.5 bg-slate-900 border border-brand-border hover:bg-slate-850 text-slate-400 text-3xs font-bold rounded-lg text-center w-full";
+      });
+      const activeLBtn = document.getElementById(`lengthBtn-${state.activeLength}`);
+      activeLBtn.className = "pr-length-btn py-1.5 bg-brand-accent text-white text-3xs font-bold rounded-lg text-center w-full border border-brand-accent/20";
+    }
+
+    // Generate PR story piece
+    function triggerPrGeneration() {
+      const subId = parseInt(document.getElementById('prActiveSubmissionId').value);
+      const sub = state.submissions.find(s => s.id === subId);
+      const ch = seededChallenges.find(c => c.id === (sub ? sub.challengeId : null));
+      if(!sub || !ch) return;
+
+      const outputEl = document.getElementById('generatedPrOutput');
+      const mockPostContent = document.getElementById('mockPostContent');
+      const mockAuthor = document.getElementById('mockPostAuthor');
+      outputEl.innerText = "Generating success story with AI, please wait...";
+
+      // Generate simulated copy depending on tone preferences and parameters
+      setTimeout(() => {
+        let content = "";
+        const uName = state.branding.universityName || "Đại học Văn Lang";
+        const hashtags = state.branding.defaultHashtags || "#VLUers";
+
+        if (state.activePlatform === 'FACEBOOK') {
+          mockAuthor.innerText = uName;
+          
+          if (state.activeLength === 'SHORT') {
+            content = `🎉 TIN CỰC VUI: CHÚC MỪNG VLUer XUẤT SẮC CHINH PHỤC THỬ THÁCH!\n\nBạn ${sub.studentName} (${sub.major}) vừa xuất sắc giành huy hiệu Vetting Chuyên nghiệp từ ${ch.agencyName} với điểm số AI ấn tượng ${sub.aiScore}/100! 🌟\n\nNăng lực thực chiến được kiểm chứng ngay tại trường đại học. Cực kỳ tự hào về tài năng của sinh viên chúng ta!\n\n${hashtags}`;
+          } else if (state.activeLength === 'LONG') {
+            content = `🔥 BẢN LĨNH THỰC CHIẾN - VLUer TỎA SÁNG TRƯỚC DOANH NGHIỆP LỚN!\n\nChúc mừng sinh viên ${sub.studentName} thuộc chuyên ngành ${sub.major} đã chính thức được trao tặng Huy hiệu xác thực năng lực chuyên môn trực tiếp từ đối tác chiến lược ${ch.agencyName}!\n\nChinh phục thử thách "${ch.title}", bài làm của ${sub.studentName} đã đạt số điểm AI cao ngất ngưởng ${sub.aiScore}/100 nhờ ưu điểm xuất sắc: ${sub.aiFeedback.strengths[0]}.\n\nNhận xét từ chuyên gia của ${ch.agencyName}: "${sub.managerComment || 'Bài làm đạt chuẩn thực tế.'}"\n\n👉 Đây chính là minh chứng sống động cho chất lượng đào tạo thực tiễn kết hợp doanh nghiệp tại ${uName}. Phụ huynh hoàn toàn tin tưởng, sinh viên vững bước sự nghiệp tương lai!\n\n${hashtags}`;
+          } else { // MEDIUM
+            content = `🎉 TIN VUI TỰ HÀO: VLUers ĐẠT CHỨNG NHẬN CỦA ${ch.agencyName.toUpperCase()}!\n\nCực kỳ tự hào thông báo bạn ${sub.studentName} - sinh viên tài năng khoa ${sub.major.split(' ').slice(-1)} vừa vượt qua thử thách khắt khe từ ${ch.agencyName} để rinh về huy hiệu Professional Vetted! 🌟\n\nBài làm xuất sắc đạt ${sub.aiScore} điểm với nhận định thế mạnh: "${sub.aiFeedback.strengths[0]}".\n\nChúc mừng thành công thực chiến tuyệt vời này của bạn!\n\n${hashtags}`;
+          }
+        } 
+        else { // LINKEDIN
+          mockAuthor.innerText = `${sub.studentName} (via ${uName})`;
+          
+          if (state.activeLength === 'SHORT') {
+            content = `I am proud to share that I have successfully completed the corporate challenge "${ch.title}" issued by ${ch.agencyName} on the VLU Challenge Portal!\n\nMy solution achieved an AI Vetting score of ${sub.aiScore}/100. This verification is a great indicator of my readiness for the professional Comms & Marketing landscape.\n\n#VLU #ProfessionalAchievement #${ch.agencyName.replace(' ', '')}`;
+          } else if (state.activeLength === 'LONG') {
+            content = `Delighted to announce a milestone in my academic and professional journey at ${uName}!\n\nI have successfully resolved the industry case brief "${ch.title}" issued by ${ch.agencyName}. After screening, my solution achieved a vetting score of ${sub.aiScore}/100 and was approved by corporate mentors.\n\nKey feedback highlighted: "${sub.aiFeedback.strengths[0]}"\n\nI want to thank the mentors at ${ch.agencyName} and faculty at VLU for driving this practical integration. Excited to bring these verified capabilities to my future career roles!\n\n${hashtags}`;
+          } else { // MEDIUM
+            content = `Excited to share that my solution for the "${ch.title}" challenge hosted by ${ch.agencyName} has been officially approved! 🌟\n\nThrough VLU's Challenge Vetting Portal, my proposal scored ${sub.aiScore}/100 under rigorous corporate criteria. This badge verifies my practical capability in ${sub.major}.\n\nThank you to ${ch.agencyName} for the review and evaluation!\n\n${hashtags}`;
+          }
+        }
+
+        outputEl.innerText = content;
+        mockPostContent.innerText = content;
+      }, 500);
+    }
+
+    // Clipboard copy action
+    function copyPrToClipboard() {
+      const content = document.getElementById('generatedPrOutput').innerText;
+      navigator.clipboard.writeText(content).then(() => {
+        alert("PR content copied to clipboard successfully!");
+      });
+    }
+
+    function switchViewTab(tabId) {
+      // Auxiliary tab routing inside dashboards
+      alert(`Demo routing: Navigating to ${tabId}`);
+    }
+
+
+    /* --- INITIALIZATION ON START --- */
+    window.addEventListener('DOMContentLoaded', () => {
+      initDatabase();
+      renderChallengeDirectory();
+      switchRole('student'); // Default view
+    });
+
+  </script>
+</body>
+</html>
