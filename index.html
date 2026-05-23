@@ -189,11 +189,11 @@
           <div class="absolute right-0 top-0 w-80 h-80 bg-brand-accent/5 rounded-full blur-[90px] pointer-events-none"></div>
           <div class="absolute left-1/3 bottom-0 w-60 h-60 bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none"></div>
           
-          <div class="space-y-3 max-w-xl z-10">
+          <div class="space-y-3 max-w-2xl z-10">
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
               <i class="fa-solid fa-sparkles mr-1.5 text-brand-gold animate-pulse"></i> Real-world Career Vetting Arena
             </span>
-            <h2 class="text-2xl lg:text-3xl font-extrabold tracking-tight font-heading text-white">Chứng thực thực chiến - Chốt kèo tuyển sinh</h2>
+            <h2 class="text-lg md:text-xl lg:text-2xl font-extrabold tracking-tight font-heading text-white">Chứng thực thực chiến - Chốt kèo tuyển sinh</h2>
             <p class="text-slate-400 text-sm leading-relaxed">Chinh phục thử thách thực tế từ các doanh nghiệp lớn. Nhận đánh giá AI tức thì và xác thực từ chuyên gia để mở khóa các huy hiệu năng lực chuyên môn danh giá!</p>
           </div>
 
@@ -1017,7 +1017,7 @@
                 </div>
                 <div>
                   <h3 class="text-sm font-bold text-white">Challenge Barem & Rubrics</h3>
-                  <p class="text-[10px] text-slate-500">View and edit specific evaluation criteria and weights for each active corporate challenge.</p>
+                  <p class="text-[10px] text-slate-500">View and edit specific evaluation rubrics for each active corporate challenge.</p>
                 </div>
               </div>
 
@@ -1029,38 +1029,33 @@
                 </select>
               </div>
 
-              <!-- Rubric inputs -->
+              <!-- Rubric Textarea input -->
               <div class="space-y-4 border-t border-brand-border pt-4">
                 <div>
-                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1">Rubric Criteria 1 (Thực tiễn & Khả thi)</label>
-                  <input type="text" id="sys-rubric-crit1" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-accent mb-2">
-                  <div class="flex items-center justify-between">
-                    <span class="text-3xs text-slate-500">Weight (%)</span>
-                    <input type="number" id="sys-rubric-weight1" class="w-20 bg-slate-950/80 border border-brand-border rounded-xl px-2.5 py-1 text-center text-xs text-slate-200">
-                  </div>
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">Grading Criteria & Rubrics Text</label>
+                  <textarea id="sys-rubric-text" rows="8" placeholder="Paste corporate rubrics / barem chấm điểm here (copied from PDF/Word brief)..." class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-accent transition-all leading-relaxed"></textarea>
                 </div>
 
+                <!-- Rubric Word/PDF Document upload dropzone -->
                 <div>
-                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1">Rubric Criteria 2 (Thấu hiểu thị trường & Khách hàng)</label>
-                  <input type="text" id="sys-rubric-crit2" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-accent mb-2">
-                  <div class="flex items-center justify-between">
-                    <span class="text-3xs text-slate-500">Weight (%)</span>
-                    <input type="number" id="sys-rubric-weight2" class="w-20 bg-slate-950/80 border border-brand-border rounded-xl px-2.5 py-1 text-center text-xs text-slate-200">
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1">Rubric Criteria 3 (Trình bày & Cấu trúc giải pháp)</label>
-                  <input type="text" id="sys-rubric-crit3" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-accent mb-2">
-                  <div class="flex items-center justify-between">
-                    <span class="text-3xs text-slate-500">Weight (%)</span>
-                    <input type="number" id="sys-rubric-weight3" class="w-20 bg-slate-950/80 border border-brand-border rounded-xl px-2.5 py-1 text-center text-xs text-slate-200">
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">Or Upload Rubric Document (Word / PDF)</label>
+                  <div class="relative border border-dashed border-slate-800 hover:border-brand-gold/50 bg-slate-950/50 rounded-xl p-4 text-center cursor-pointer transition-all group" onclick="document.getElementById('sys-rubric-file').click()">
+                    <input type="file" id="sys-rubric-file" class="hidden" accept=".pdf,.doc,.docx" onchange="handleSysadminRubricUpload(event)">
+                    
+                    <div id="sys-rubric-file-empty" class="space-y-1">
+                      <i class="fa-solid fa-file-arrow-up text-lg text-slate-500 group-hover:text-brand-gold transition-colors"></i>
+                      <p class="text-[10px] font-semibold text-slate-400">Upload grading rubric file</p>
+                    </div>
+                    <div id="sys-rubric-file-success" class="hidden flex items-center justify-center space-x-1.5">
+                      <i class="fa-solid fa-file-circle-check text-base text-brand-gold animate-pulse"></i>
+                      <span id="sys-rubric-file-name" class="text-[10px] font-semibold text-brand-gold truncate max-w-[180px]">barem.pdf</span>
+                    </div>
                   </div>
                 </div>
 
                 <div class="bg-indigo-950/20 border border-indigo-950 rounded-xl p-3.5 space-y-1">
-                  <span class="text-3xs font-extrabold uppercase text-indigo-400 block"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Rubrics Guidelines</span>
-                  <p class="text-[10px] text-slate-400 leading-relaxed">Weights are used to compute weighted final scores. Make sure the total sum equals 100%.</p>
+                  <span class="text-3xs font-extrabold uppercase text-indigo-400 block"><i class="fa-solid fa-lightbulb mr-1.5"></i>Pro-Tip</span>
+                  <p class="text-[10px] text-slate-400 leading-relaxed">Copying and pasting the text barem gives Gemini a structured format to grade submissions accurately. Setting a file upload is useful for client presentations.</p>
                 </div>
               </div>
 
@@ -1332,36 +1327,20 @@ Respond ONLY in a valid JSON format matching this schema:
 
     const defaultChallengeRubrics = {
       1: {
-        crit1: "Thực tiễn & Khả thi: Đề xuất chiến dịch PR 3 tháng có lộ trình cụ thể, ngân sách và phương án booking rõ ràng.",
-        weight1: 40,
-        crit2: "Thấu hiểu khách hàng: Phân tích sâu sắc insight và thói quen xem TikTok/Facebook của Gen Z.",
-        weight2: 30,
-        crit3: "Trình bày giải pháp: Bố cục brief mạch lạc, thu hút, văn phong sắc bén.",
-        weight3: 30
+        text: `Barem chấm điểm Vinamilk FMCG:\n- Ý tưởng sáng tạo, phù hợp với đối tượng Gen Z (Trọng số 40%)\n- Kế hoạch triển khai kênh TikTok & Facebook chi tiết trong 3 tháng (Trọng số 30%)\n- Ngân sách truyền thông rõ ràng và phương án quản trị rủi ro thông tin (Trọng số 30%)`,
+        fileName: ""
       },
       2: {
-        crit1: "Khả năng UX/UI: Sơ đồ luồng đi (User Flow) logic, wireframe chi tiết và hệ thống lưới tỉ lệ cân đối.",
-        weight1: 40,
-        crit2: "Giải pháp thiết kế: Tính năng tích điểm và báo cáo rác thải thân thiện với cư dân.",
-        weight2: 30,
-        crit3: "CV/Kinh nghiệm: Có kỹ năng thiết kế Figma, tư duy thẩm mỹ hiện đại.",
-        weight3: 30
+        text: `Barem chấm điểm Dentsu Smart App:\n- Thiết kế UX/UI trực quan, luồng đi người dùng (User Flow) hợp lý (Trọng số 40%)\n- Tính năng báo cáo rác thải & tích điểm thưởng thân thiện (Trọng số 30%)\n- Bố cục wireframe và hệ thống lưới thiết kế tỉ lệ chuẩn Figma (Trọng số 30%)`,
+        fileName: ""
       },
       3: {
-        crit1: "Ý tưởng sáng tạo: Kịch bản TVC 30s truyền tải câu chuyện Tết 2027 độc đáo, giàu cảm xúc.",
-        weight1: 40,
-        crit2: "Kế hoạch IMC: Ý tưởng billboard và thông điệp truyền thông nhất quán.",
-        weight2: 30,
-        crit3: "Kỹ năng Copywriting: Văn phong truyền cảm hứng, viết slogan/tagline ấn tượng.",
-        weight3: 30
+        text: `Barem chấm điểm Dentsu TVC Bia Việt:\n- Kịch bản TVC 30s ngày Tết 2027 có cốt truyện cảm xúc, thông điệp truyền cảm hứng (Trọng số 40%)\n- Tính đồng bộ IMC giữa TVC và thiết kế billboard ngoài trời (Trọng số 30%)\n- Kỹ năng copywriting, slogan & thông điệp PR sắc bén (Trọng số 30%)`,
+        fileName: ""
       },
       4: {
-        crit1: "Định vị IMC: Kế hoạch định vị thương hiệu tích hợp (IMC) cho lon giấy tái chế sinh học.",
-        weight1: 40,
-        crit2: "Tính bền vững: Thông điệp truyền tải định hướng CSR/Sustainability chân thực.",
-        weight2: 30,
-        crit3: "Kế hoạch đo lường: Chỉ số đo lường KPI truyền thông kỹ thuật số chi tiết.",
-        weight3: 30
+        text: `Barem chấm điểm Coca-Cola Recycled Can:\n- Kế hoạch định vị thương hiệu tích hợp (IMC) cho dòng lon giấy tái chế (Trọng số 40%)\n- Thông điệp truyền thông ESG/Sustainability chân thực, không Greenwashing (Trọng số 30%)\n- Các KPI kỹ thuật số dự tính (CTR, Conversion Rate, CPA) chi tiết (Trọng số 30%)`,
+        fileName: ""
       }
     };
 
@@ -1394,15 +1373,19 @@ Respond ONLY in a valid JSON format matching this schema:
         state = JSON.parse(stored);
         if (!state.sys_system_prompt) state.sys_system_prompt = defaultSystemPrompt;
         if (!state.sys_resume_guidelines) state.sys_resume_guidelines = defaultResumeGuidelines;
-        if (!state.sys_challenge_rubrics) state.sys_challenge_rubrics = {...defaultChallengeRubrics};
         if (!state.sys_gemini_key) state.sys_gemini_key = "";
         if (!state.sys_resume_templates) state.sys_resume_templates = [...defaultResumeTemplates];
+        
+        // Migrate rubrics if they are in the old format
+        if (!state.sys_challenge_rubrics || !state.sys_challenge_rubrics[1] || typeof state.sys_challenge_rubrics[1].text === 'undefined') {
+          state.sys_challenge_rubrics = JSON.parse(JSON.stringify(defaultChallengeRubrics));
+        }
       } else {
         state.submissions = [...initialSubmissions];
         state.branding = {...defaultBranding};
         state.sys_system_prompt = defaultSystemPrompt;
         state.sys_resume_guidelines = defaultResumeGuidelines;
-        state.sys_challenge_rubrics = {...defaultChallengeRubrics};
+        state.sys_challenge_rubrics = JSON.parse(JSON.stringify(defaultChallengeRubrics));
         state.sys_gemini_key = "";
         state.sys_resume_templates = [...defaultResumeTemplates];
         saveDatabase();
@@ -1712,23 +1695,29 @@ Respond ONLY in a valid JSON format matching this schema:
       
       const finalScore = Math.min(rawScore, 98);
       
-      // Extract brief keywords from custom rubrics criteria
-      const crit1Name = rub.crit1.split(':')[0] || "Thực tiễn & Khả thi";
-      const crit2Name = rub.crit2.split(':')[0] || "Thấu hiểu khách hàng";
-      const crit3Name = rub.crit3.split(':')[0] || "Trình bày giải pháp";
+      // Simple parse of freeform rubric text to give dynamic feedback
+      const rubricText = rub.text || "";
+      let critWord = "Thực tiễn";
+      if (rubricText.toLowerCase().includes("thiết kế") || rubricText.toLowerCase().includes("ux") || rubricText.toLowerCase().includes("figma")) {
+        critWord = "Tư duy thiết kế UX/UI";
+      } else if (rubricText.toLowerCase().includes("kịch bản") || rubricText.toLowerCase().includes("tvc") || rubricText.toLowerCase().includes("sáng tạo")) {
+        critWord = "Ý tưởng sáng tạo TVC";
+      } else if (rubricText.toLowerCase().includes("imc") || rubricText.toLowerCase().includes("định vị")) {
+        critWord = "Chiến lược định vị IMC";
+      }
 
       let strengths = [
-        `Ý tưởng đề xuất thực tế, bám sát các tiêu chuẩn thuộc tiêu chí "${crit1Name}".`,
-        `Thể hiện mức độ thấu hiểu bài toán và thỏa mãn tiêu chí "${crit2Name}" rất tốt.`,
+        `Ý tưởng đề xuất thực tế, giải quyết cơ bản các yêu cầu trong barem chấm điểm của doanh nghiệp.`,
+        `Thể hiện thế mạnh rõ nét ở tiêu chí "${critWord}".`,
         "Cấu trúc CV chuyên nghiệp, thể hiện tư duy có định hướng rõ ràng và chủ động."
       ];
       let gaps = [
-        `Phần ngân sách và triển khai theo chuẩn "${crit1Name}" cần làm rõ thêm các chi phí phụ.`,
-        `Thiếu nghiên cứu hành vi sâu hơn của nhóm mục tiêu liên quan đến tiêu chí "${crit2Name}".`,
-        `Bố cục giải pháp chưa thực sự mạch lạc, cần tối ưu theo chuẩn "${crit3Name}".`
+        `Các số liệu đo lường và dự trù ngân sách cần được chi tiết hóa hơn theo yêu cầu.`,
+        `Cần bổ sung thêm nghiên cứu insight sâu về nhóm đối tượng mục tiêu.`,
+        `Phương án quản trị rủi ro hoặc các kịch bản dự phòng chưa được nhắc tới trong bài giải.`
       ];
       let actionSteps = [
-        `Chi tiết hóa ngân sách và kế hoạch phân phối truyền thông thực chiến theo rubrics.`,
+        `Rà soát lại barem chấm điểm và chi tiết hóa các KPI cụ thể cho từng kênh.`,
         `Thực hiện khảo sát mẫu hoặc dẫn chứng số liệu thực tế để củng cố giải pháp.`,
         `Định dạng lại tài liệu brief gọn gàng, tăng kích thước font chữ và độ tương phản.`
       ];
@@ -1787,9 +1776,7 @@ TARGET RESUME GUIDELINES:
 ${state.sys_resume_guidelines}
 
 CHALLENGE EVALUATION RUBRICS & BAREM:
-- Criteria 1: ${rub.crit1} (Weight: ${rub.weight1}%)
-- Criteria 2: ${rub.crit2} (Weight: ${rub.weight2}%)
-- Criteria 3: ${rub.crit3} (Weight: ${rub.weight3}%)
+${rub.text}
 
 Evaluate the student's submission CV + Solution notes based on the above target guidelines and challenge rubrics.
 Return a valid JSON output matching:
@@ -2288,12 +2275,20 @@ Return a valid JSON output matching:
       const challengeId = parseInt(select.value);
       const rub = state.sys_challenge_rubrics[challengeId];
       if (rub) {
-        document.getElementById('sys-rubric-crit1').value = rub.crit1;
-        document.getElementById('sys-rubric-weight1').value = rub.weight1;
-        document.getElementById('sys-rubric-crit2').value = rub.crit2;
-        document.getElementById('sys-rubric-weight2').value = rub.weight2;
-        document.getElementById('sys-rubric-crit3').value = rub.crit3;
-        document.getElementById('sys-rubric-weight3').value = rub.weight3;
+        document.getElementById('sys-rubric-text').value = rub.text || "";
+        
+        const fileEmpty = document.getElementById('sys-rubric-file-empty');
+        const fileSuccess = document.getElementById('sys-rubric-file-success');
+        const fileNameSpan = document.getElementById('sys-rubric-file-name');
+        
+        if (rub.fileName) {
+          fileNameSpan.innerText = rub.fileName;
+          fileEmpty.classList.add('hidden');
+          fileSuccess.classList.remove('hidden');
+        } else {
+          fileEmpty.classList.remove('hidden');
+          fileSuccess.classList.add('hidden');
+        }
       }
     }
 
@@ -2322,30 +2317,41 @@ Return a valid JSON output matching:
     function saveSysadminChallengeRubric() {
       const select = document.getElementById('sys-rubric-challenge-select');
       const challengeId = parseInt(select.value);
+      const text = document.getElementById('sys-rubric-text').value.trim();
       
-      const c1 = document.getElementById('sys-rubric-crit1').value.trim();
-      const w1 = parseInt(document.getElementById('sys-rubric-weight1').value) || 0;
-      const c2 = document.getElementById('sys-rubric-crit2').value.trim();
-      const w2 = parseInt(document.getElementById('sys-rubric-weight2').value) || 0;
-      const c3 = document.getElementById('sys-rubric-crit3').value.trim();
-      const w3 = parseInt(document.getElementById('sys-rubric-weight3').value) || 0;
-      
-      if (w1 + w2 + w3 !== 100) {
-        alert("Warning: The sum of weights does not equal 100%. Total weights: " + (w1 + w2 + w3) + "%. Please adjust before saving.");
-        return;
+      if (!state.sys_challenge_rubrics[challengeId]) {
+        state.sys_challenge_rubrics[challengeId] = { text: "", fileName: "" };
       }
       
-      state.sys_challenge_rubrics[challengeId] = {
-        crit1: c1,
-        weight1: w1,
-        crit2: c2,
-        weight2: w2,
-        crit3: c3,
-        weight3: w3
-      };
+      state.sys_challenge_rubrics[challengeId].text = text;
       
       saveDatabase();
-      alert("Challenge Rubrics saved successfully!");
+      alert("Challenge Rubric saved successfully!");
+    }
+
+    // Handle grading rubric document upload in System Admin view
+    function handleSysadminRubricUpload(event) {
+      const select = document.getElementById('sys-rubric-challenge-select');
+      const challengeId = parseInt(select.value);
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!state.sys_challenge_rubrics[challengeId]) {
+        state.sys_challenge_rubrics[challengeId] = { text: "", fileName: "" };
+      }
+
+      state.sys_challenge_rubrics[challengeId].fileName = file.name;
+      
+      // Auto-extract simulation: append file name to text area to show connection
+      const textEl = document.getElementById('sys-rubric-text');
+      if (!textEl.value.includes(file.name)) {
+        textEl.value = `[Bảng chấm điểm nạp từ: ${file.name}]\n\n` + textEl.value;
+        state.sys_challenge_rubrics[challengeId].text = textEl.value;
+      }
+
+      saveDatabase();
+      loadChallengeRubricInAdmin();
+      alert(`Grading rubric document "${file.name}" uploaded successfully for this challenge!`);
     }
 
     function resetSysadminDefaultDatabase() {
