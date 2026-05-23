@@ -8,10 +8,10 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Google Fonts: Outfit (Heading) & Inter (Body) -->
+  <!-- Google Fonts: Plus Jakarta Sans (Heading) & Inter (Body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;850;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,7 +25,7 @@
         extend: {
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
-            heading: ['Outfit', 'sans-serif'],
+            heading: ['"Plus Jakarta Sans"', 'sans-serif'],
           },
           colors: {
             brand: {
@@ -126,6 +126,9 @@
       </button>
       <button onclick="switchRole('admin')" id="roleBtn-admin" class="role-btn px-3 py-1.5 rounded-lg font-bold transition-all flex items-center text-slate-400 hover:text-slate-200 hover:bg-slate-800">
         <i class="fa-solid fa-building-columns mr-1.5"></i> University Admin
+      </button>
+      <button onclick="switchRole('sysadmin')" id="roleBtn-sysadmin" class="role-btn px-3 py-1.5 rounded-lg font-bold transition-all flex items-center text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+        <i class="fa-solid fa-gears mr-1.5"></i> System Admin
       </button>
     </div>
   </div>
@@ -879,6 +882,203 @@
 
       </div>
 
+      <!-- ==================== VIEW 4: SYSTEM ADMIN PORTAL ==================== -->
+      <div id="view-sysadmin" class="view-container space-y-8 hidden">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-extrabold tracking-tight font-heading text-white">System Admin AI & Rubrics Configuration</h2>
+            <p class="text-slate-400 text-xs mt-0.5">Customize LLM system prompts, target resume guidelines, challenge grading rubrics, and setup real Gemini API execution.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Left Column: Prompts and Keys (7 cols) -->
+          <div class="lg:col-span-7 space-y-6">
+            <!-- Gemini API Key configuration card -->
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-4">
+              <div class="flex items-center space-x-3 border-b border-brand-border pb-4">
+                <div class="h-9 w-9 bg-brand-accent/10 rounded-xl flex items-center justify-center text-brand-accent">
+                  <i class="fa-solid fa-key"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">Gemini API Configuration</h3>
+                  <p class="text-[10px] text-slate-500">Provide your Google Gemini API Key to enable real client-side AI analysis.</p>
+                </div>
+              </div>
+              
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">Gemini API Key</label>
+                  <input type="password" id="sys-gemini-key" placeholder="Enter Gemini API Key (AI Studio)" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-accent transition-all">
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-3xs text-slate-500 leading-relaxed"><i class="fa-solid fa-lock mr-1"></i>Saved locally in your browser's localStorage. Never sent to any server except Google API.</span>
+                  <button onclick="saveSysadminApiKey()" class="px-4 py-1.5 bg-brand-accent hover:bg-rose-500 text-white text-3xs font-bold rounded-lg transition-colors shadow shadow-brand-accent/15">
+                    Save Key
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Global System Prompt configuration card -->
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-4">
+              <div class="flex items-center space-x-3 border-b border-brand-border pb-4">
+                <div class="h-9 w-9 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
+                  <i class="fa-solid fa-robot"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">Core AI System Prompt</h3>
+                  <p class="text-[10px] text-slate-500">Define general guidelines and constraints for the AI reviewer.</p>
+                </div>
+              </div>
+              
+              <div class="space-y-3">
+                <div>
+                  <textarea id="sys-system-prompt" rows="8" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-4 py-3 text-xs text-indigo-300 font-mono focus:outline-none focus:border-indigo-500 transition-all leading-relaxed"></textarea>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] text-slate-500">Prompt will be injected as the System Instruction during API calls.</span>
+                  <button onclick="saveSysadminPrompts()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-3xs font-bold rounded-lg transition-colors">
+                    Save System Prompt
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resume Target criteria guidelines card -->
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-4">
+              <div class="flex items-center space-x-3 border-b border-brand-border pb-4">
+                <div class="h-9 w-9 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-400">
+                  <i class="fa-solid fa-id-card"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">Target Resume & Portfolio PDF Guidelines</h3>
+                  <p class="text-[10px] text-slate-500">Define the benchmark resume guidelines (experiences, layout) the student is matched against.</p>
+                </div>
+              </div>
+              
+              <div class="space-y-3">
+                <div>
+                  <textarea id="sys-resume-guidelines" rows="6" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-4 py-3 text-xs text-teal-300 font-mono focus:outline-none focus:border-teal-500 transition-all leading-relaxed"></textarea>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-[10px] text-slate-500">This guidelines document serves as reference benchmarks for resume evaluation.</span>
+                  <button onclick="saveSysadminResumeGuidelines()" class="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-3xs font-bold rounded-lg transition-colors">
+                    Save Guidelines
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resume Template Library Upload card -->
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-4">
+              <div class="flex items-center space-x-3 border-b border-brand-border pb-4">
+                <div class="h-9 w-9 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400">
+                  <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">Resume Template Library</h3>
+                  <p class="text-[10px] text-slate-500">Upload sample resume templates (PDF/Word) to benchmark students' CV submissions.</p>
+                </div>
+              </div>
+              
+              <div class="space-y-4">
+                <!-- Dropzone for templates -->
+                <div class="relative border border-dashed border-slate-800 hover:border-emerald-500/50 bg-slate-950/50 rounded-xl p-6 text-center cursor-pointer transition-all group" onclick="document.getElementById('sys-template-files').click()">
+                  <input type="file" id="sys-template-files" class="hidden" accept=".pdf,.doc,.docx" multiple onchange="handleSysadminTemplateUpload(event)">
+                  <div class="space-y-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-500 group-hover:text-emerald-400 transition-colors"></i>
+                    <p class="text-xs font-semibold text-slate-350">Click or drag & drop files here</p>
+                    <p class="text-[10px] text-slate-550">Supports PDF, DOC, DOCX up to 10MB</p>
+                  </div>
+                </div>
+
+                <!-- Template list -->
+                <div class="space-y-2">
+                  <span class="text-3xs uppercase font-extrabold tracking-wider text-slate-450 block">Active Template List</span>
+                  <div id="sys-template-list" class="space-y-2 max-h-48 overflow-y-auto">
+                    <!-- Populated via JS -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Rubrics & Barem Config (5 cols) -->
+          <div class="lg:col-span-5 space-y-6">
+            <!-- Challenge Rubrics Config card -->
+            <div class="glass-card rounded-3xl p-6 border border-brand-border shadow-xl space-y-5">
+              <div class="flex items-center space-x-3 border-b border-brand-border pb-4">
+                <div class="h-9 w-9 bg-brand-gold/10 rounded-xl flex items-center justify-center text-brand-gold">
+                  <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">Challenge Barem & Rubrics</h3>
+                  <p class="text-[10px] text-slate-500">View and edit specific evaluation criteria and weights for each active corporate challenge.</p>
+                </div>
+              </div>
+
+              <!-- Challenge selector -->
+              <div>
+                <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1.5">Select Challenge</label>
+                <select id="sys-rubric-challenge-select" onchange="loadChallengeRubricInAdmin()" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-accent transition-all">
+                  <!-- Loaded via JS -->
+                </select>
+              </div>
+
+              <!-- Rubric inputs -->
+              <div class="space-y-4 border-t border-brand-border pt-4">
+                <div>
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1">Rubric Criteria 1 (Thực tiễn & Khả thi)</label>
+                  <input type="text" id="sys-rubric-crit1" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-accent mb-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-3xs text-slate-500">Weight (%)</span>
+                    <input type="number" id="sys-rubric-weight1" class="w-20 bg-slate-950/80 border border-brand-border rounded-xl px-2.5 py-1 text-center text-xs text-slate-200">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1">Rubric Criteria 2 (Thấu hiểu thị trường & Khách hàng)</label>
+                  <input type="text" id="sys-rubric-crit2" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-accent mb-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-3xs text-slate-500">Weight (%)</span>
+                    <input type="number" id="sys-rubric-weight2" class="w-20 bg-slate-950/80 border border-brand-border rounded-xl px-2.5 py-1 text-center text-xs text-slate-200">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-3xs uppercase font-extrabold tracking-wider text-slate-450 mb-1">Rubric Criteria 3 (Trình bày & Cấu trúc giải pháp)</label>
+                  <input type="text" id="sys-rubric-crit3" class="w-full bg-slate-950/80 border border-brand-border rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-accent mb-2">
+                  <div class="flex items-center justify-between">
+                    <span class="text-3xs text-slate-500">Weight (%)</span>
+                    <input type="number" id="sys-rubric-weight3" class="w-20 bg-slate-950/80 border border-brand-border rounded-xl px-2.5 py-1 text-center text-xs text-slate-200">
+                  </div>
+                </div>
+
+                <div class="bg-indigo-950/20 border border-indigo-950 rounded-xl p-3.5 space-y-1">
+                  <span class="text-3xs font-extrabold uppercase text-indigo-400 block"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Rubrics Guidelines</span>
+                  <p class="text-[10px] text-slate-400 leading-relaxed">Weights are used to compute weighted final scores. Make sure the total sum equals 100%.</p>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center border-t border-brand-border pt-4">
+                <button onclick="resetSysadminDefaultDatabase()" class="px-3.5 py-2 bg-slate-900 border border-brand-border hover:bg-slate-850 hover:text-red-400 text-slate-500 text-3xs font-bold rounded-lg transition-all">
+                  <i class="fa-solid fa-rotate-left mr-1"></i> Reset Settings
+                </button>
+                <button onclick="saveSysadminChallengeRubric()" class="px-4 py-2 bg-brand-gold hover:bg-yellow-500 text-slate-950 text-3xs font-bold rounded-lg transition-colors flex items-center shadow-lg shadow-brand-gold/15">
+                  <i class="fa-solid fa-floppy-disk mr-1.5"></i> Save Rubric
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
     </main>
   </div>
 
@@ -1107,15 +1307,84 @@
       defaultHashtags: "#VanLangUniversity #ReadyToShine #CreativeChallenge #AgencyReady #VLUers"
     };
 
+    const defaultSystemPrompt = `You are the VLU Career Division AI Evaluator. Your task is to score a student's resume guidelines matching and their corporate challenge solution.
+Evaluate the student's submission carefully using the configured grading rubrics (criteria & weights) and target resume guidelines.
+Provide a final weighted score (from 0 to 100).
+Also provide:
+1. Core Strengths (Danh sách các điểm mạnh bằng tiếng Việt)
+2. Growth Areas (Danh sách các điểm cần cải thiện bằng tiếng Việt)
+3. Action Steps (Các bước hành động đề xuất bằng tiếng Việt)
+
+Respond ONLY in a valid JSON format matching this schema:
+{
+  "score": 85,
+  "strengths": ["Điểm mạnh 1", "Điểm mạnh 2"],
+  "gaps": ["Điểm cần cải thiện 1", "Điểm cần cải thiện 2"],
+  "actionSteps": ["Hành động 1", "Hành động 2"]
+}`;
+
+    const defaultResumeGuidelines = `Yêu cầu mẫu Resume đạt chuẩn doanh nghiệp:
+- Trình bày thông tin liên hệ chuyên nghiệp (SĐT, Email trường).
+- Nêu rõ chuyên ngành học tập (PR, Digital Marketing, Thiết kế đồ họa...).
+- Liệt kê các dự án thực tế hoặc hoạt động ngoại khóa liên quan trực tiếp đến Brief.
+- Sử dụng các động từ hành động và số liệu đo lường kết quả (nếu có).
+- Portfolio PDF (nếu tải lên) phải trực quan, thể hiện rõ tư duy giải quyết vấn đề và các thiết kế/kế hoạch mẫu.`;
+
+    const defaultChallengeRubrics = {
+      1: {
+        crit1: "Thực tiễn & Khả thi: Đề xuất chiến dịch PR 3 tháng có lộ trình cụ thể, ngân sách và phương án booking rõ ràng.",
+        weight1: 40,
+        crit2: "Thấu hiểu khách hàng: Phân tích sâu sắc insight và thói quen xem TikTok/Facebook của Gen Z.",
+        weight2: 30,
+        crit3: "Trình bày giải pháp: Bố cục brief mạch lạc, thu hút, văn phong sắc bén.",
+        weight3: 30
+      },
+      2: {
+        crit1: "Khả năng UX/UI: Sơ đồ luồng đi (User Flow) logic, wireframe chi tiết và hệ thống lưới tỉ lệ cân đối.",
+        weight1: 40,
+        crit2: "Giải pháp thiết kế: Tính năng tích điểm và báo cáo rác thải thân thiện với cư dân.",
+        weight2: 30,
+        crit3: "CV/Kinh nghiệm: Có kỹ năng thiết kế Figma, tư duy thẩm mỹ hiện đại.",
+        weight3: 30
+      },
+      3: {
+        crit1: "Ý tưởng sáng tạo: Kịch bản TVC 30s truyền tải câu chuyện Tết 2027 độc đáo, giàu cảm xúc.",
+        weight1: 40,
+        crit2: "Kế hoạch IMC: Ý tưởng billboard và thông điệp truyền thông nhất quán.",
+        weight2: 30,
+        crit3: "Kỹ năng Copywriting: Văn phong truyền cảm hứng, viết slogan/tagline ấn tượng.",
+        weight3: 30
+      },
+      4: {
+        crit1: "Định vị IMC: Kế hoạch định vị thương hiệu tích hợp (IMC) cho lon giấy tái chế sinh học.",
+        weight1: 40,
+        crit2: "Tính bền vững: Thông điệp truyền tải định hướng CSR/Sustainability chân thực.",
+        weight2: 30,
+        crit3: "Kế hoạch đo lường: Chỉ số đo lường KPI truyền thông kỹ thuật số chi tiết.",
+        weight3: 30
+      }
+    };
+
+    const defaultResumeTemplates = [
+      { name: "VLU_Standard_PR_Resume_Template.pdf", size: "320 KB", uploadDate: "2026-05-20" },
+      { name: "VLU_Marketing_Elite_Portfolio_Blueprint.pdf", size: "1.2 MB", uploadDate: "2026-05-21" },
+      { name: "VLU_UX_Design_Case_Study_Structure.pdf", size: "850 KB", uploadDate: "2026-05-22" }
+    ];
+
     // In-memory active database (state)
     let state = {
-      currentUserRole: 'student', // 'student', 'manager', 'admin'
-      currentView: 'student', // 'student', 'manager', 'admin'
+      currentUserRole: 'student', // 'student', 'manager', 'admin', 'sysadmin'
+      currentView: 'student', // 'student', 'manager', 'admin', 'sysadmin'
       activePlatform: 'FACEBOOK', // 'FACEBOOK', 'LINKEDIN'
       activeLength: 'MEDIUM', // 'SHORT', 'MEDIUM', 'LONG'
       selectedChallengeId: null,
       submissions: [],
-      branding: {}
+      branding: {},
+      sys_system_prompt: '',
+      sys_resume_guidelines: '',
+      sys_challenge_rubrics: {},
+      sys_gemini_key: '',
+      sys_resume_templates: []
     };
 
     // Initialize state
@@ -1123,15 +1392,30 @@
       const stored = localStorage.getItem('vlu_challenge_portal_state');
       if (stored) {
         state = JSON.parse(stored);
+        if (!state.sys_system_prompt) state.sys_system_prompt = defaultSystemPrompt;
+        if (!state.sys_resume_guidelines) state.sys_resume_guidelines = defaultResumeGuidelines;
+        if (!state.sys_challenge_rubrics) state.sys_challenge_rubrics = {...defaultChallengeRubrics};
+        if (!state.sys_gemini_key) state.sys_gemini_key = "";
+        if (!state.sys_resume_templates) state.sys_resume_templates = [...defaultResumeTemplates];
       } else {
         state.submissions = [...initialSubmissions];
         state.branding = {...defaultBranding};
+        state.sys_system_prompt = defaultSystemPrompt;
+        state.sys_resume_guidelines = defaultResumeGuidelines;
+        state.sys_challenge_rubrics = {...defaultChallengeRubrics};
+        state.sys_gemini_key = "";
+        state.sys_resume_templates = [...defaultResumeTemplates];
         saveDatabase();
       }
       
       // Auto fill inputs in Admin Panel on start
       document.getElementById('adminBrandingGuideline').value = state.branding.guidelineText;
       document.getElementById('adminDefaultHashtags').value = state.branding.defaultHashtags;
+      
+      // Auto fill inputs in System Admin Panel
+      document.getElementById('sys-gemini-key').value = state.sys_gemini_key;
+      document.getElementById('sys-system-prompt').value = state.sys_system_prompt;
+      document.getElementById('sys-resume-guidelines').value = state.sys_resume_guidelines;
       
       refreshGlobalUI();
     }
@@ -1178,6 +1462,9 @@
       } else if (role === 'admin') {
         renderAdminPrTable();
         closePrWorkspace();
+      } else if (role === 'sysadmin') {
+        populateChallengeSelectInAdmin();
+        renderSysadminTemplateList();
       }
 
       saveDatabase();
@@ -1202,6 +1489,11 @@
         navItems = [
           { icon: 'fa-bullhorn', label: 'PR Success Hub', action: 'switchRole("admin")' },
           { icon: 'fa-sliders', label: 'Campus Branding', action: 'switchViewTab("view-admin")' }
+        ];
+      } else if (state.currentUserRole === 'sysadmin') {
+        navItems = [
+          { icon: 'fa-gears', label: 'AI Configuration', action: 'switchRole("sysadmin")' },
+          { icon: 'fa-list-check', label: 'Challenge Rubrics', action: 'switchRole("sysadmin")' }
         ];
       }
 
@@ -1398,63 +1690,158 @@
         if(progress >= 100) {
           clearInterval(interval);
           setTimeout(() => {
-            overlay.classList.add('hidden');
+            // overlay.classList.add('hidden'); // overlay will be hidden inside evaluateStudentSubmission
             
-            // Execute simulated AI calculation logic
+            // Execute AI calculation logic
             evaluateStudentSubmission(name, email, major, notes, challengeId, cvLabel, solLabel);
           }, 600);
         }
       }, 100);
     }
 
-    // Vetting calculation logic
-    function evaluateStudentSubmission(name, email, major, notes, challengeId, cvLabel, solLabel) {
+    // Simulated evaluation based on custom rubrics configured in System Admin
+    function runSimulatedEvaluation(notes, major, rub) {
+      let rawScore = 65; // base
+      const notesLower = notes.toLowerCase();
+      
+      // Dynamic score computation based on keywords
+      if (notesLower.includes("roi") || notesLower.includes("seo") || notesLower.includes("conversion") || notesLower.includes("kpi")) rawScore += 12;
+      if (notesLower.includes("figma") || notesLower.includes("mockup") || notesLower.includes("wireframe") || notesLower.includes("ux")) rawScore += 10;
+      if (notesLower.includes("chiến dịch") || notesLower.includes("campaign") || notesLower.includes("influencer")) rawScore += 6;
+      if (notes.length > 70) rawScore += 5;
+      
+      const finalScore = Math.min(rawScore, 98);
+      
+      // Extract brief keywords from custom rubrics criteria
+      const crit1Name = rub.crit1.split(':')[0] || "Thực tiễn & Khả thi";
+      const crit2Name = rub.crit2.split(':')[0] || "Thấu hiểu khách hàng";
+      const crit3Name = rub.crit3.split(':')[0] || "Trình bày giải pháp";
+
+      let strengths = [
+        `Ý tưởng đề xuất thực tế, bám sát các tiêu chuẩn thuộc tiêu chí "${crit1Name}".`,
+        `Thể hiện mức độ thấu hiểu bài toán và thỏa mãn tiêu chí "${crit2Name}" rất tốt.`,
+        "Cấu trúc CV chuyên nghiệp, thể hiện tư duy có định hướng rõ ràng và chủ động."
+      ];
+      let gaps = [
+        `Phần ngân sách và triển khai theo chuẩn "${crit1Name}" cần làm rõ thêm các chi phí phụ.`,
+        `Thiếu nghiên cứu hành vi sâu hơn của nhóm mục tiêu liên quan đến tiêu chí "${crit2Name}".`,
+        `Bố cục giải pháp chưa thực sự mạch lạc, cần tối ưu theo chuẩn "${crit3Name}".`
+      ];
+      let actionSteps = [
+        `Chi tiết hóa ngân sách và kế hoạch phân phối truyền thông thực chiến theo rubrics.`,
+        `Thực hiện khảo sát mẫu hoặc dẫn chứng số liệu thực tế để củng cố giải pháp.`,
+        `Định dạng lại tài liệu brief gọn gàng, tăng kích thước font chữ và độ tương phản.`
+      ];
+
+      return {
+        score: finalScore,
+        strengths: strengths,
+        gaps: gaps,
+        actionSteps: actionSteps
+      };
+    }
+
+    // Live Gemini evaluation + fallback simulated evaluation logic
+    async function evaluateStudentSubmission(name, email, major, notes, challengeId, cvLabel, solLabel) {
       const ch = seededChallenges.find(c => c.id === challengeId);
       if(!ch) return;
 
-      // Score heuristics calculation based on notes/data
-      let rawScore = 65; // base
-      if (notes.toLowerCase().includes("roi") || notes.toLowerCase().includes("seo") || notes.toLowerCase().includes("conversion")) rawScore += 10;
-      if (notes.toLowerCase().includes("figma") || notes.toLowerCase().includes("mockup") || notes.toLowerCase().includes("wireframe")) rawScore += 8;
-      if (notes.length > 50) rawScore += 5;
-
-      // Cap score
-      const finalScore = Math.min(rawScore, 98);
+      const consoleLog = document.getElementById('scanConsole');
+      const overlay = document.getElementById('aiScannerOverlay');
       
-      // Determine feedbacks
-      let strengths = [
-        "Ý tưởng đề xuất thực tế, giải quyết được cốt lõi yêu cầu từ brief của doanh nghiệp.",
-        "Cấu trúc tài liệu mạch lạc, rõ ràng các bước thực thi chiến dịch.",
-        "CV thể hiện có năng lực chuyên môn và tư duy chủ động tốt."
-      ];
-      let gaps = [
-        "Phần thuyết minh ngân sách cần làm rõ chi phí cho các kênh truyền thông phụ.",
-        "Thiếu kế hoạch ứng phó khủng hoảng nếu xảy ra sự cố truyền thông.",
-        "Kế hoạch đo lường hiệu suất (KPI) cần bổ sung thêm các tỷ lệ chuyển đổi số cụ thể."
-      ];
-      let actionSteps = [
-        "Chi tiết hóa bảng dự trù tài chính, đính kèm giá tham khảo KOLs.",
-        "Bổ sung một mục phân tích ma trận rủi ro và các kịch bản đối phó.",
-        "Đặt ra các mục tiêu rõ ràng về CTR, reach, conversion rate cho từng kênh."
-      ];
+      // Keep overlay active
+      overlay.classList.remove('hidden');
+      document.getElementById('scanPercent').innerText = "Analyzing...";
 
-      if (major.includes("Design")) {
-        strengths = [
-          "Giao diện thiết kế có tính thẩm mỹ rất cao, hợp xu hướng hiện đại.",
-          "Cấu trúc các khối thành phần trực quan, hỗ trợ trải nghiệm người dùng tốt.",
-          "Figma file tổ chức gọn gàng, hệ thống màu sắc có chủ đích."
-        ];
-        gaps = [
-          "Thiếu các nghiên cứu người dùng (User research) làm cơ sở cho thiết kế.",
-          "Font chữ hiển thị hơi nhỏ ở một số nhãn nút bấm mobile.",
-          "Chưa làm rõ phương án hoạt động của trang Dashboard chi tiết."
-        ];
-        actionSteps = [
-          "Thực hiện khảo sát mẫu 5-10 người dùng thực tế.",
-          "Tăng kích cỡ font chữ các nhãn lên tối thiểu 12px.",
-          "Bổ sung một trang chi tiết thuyết minh các phím bấm tương tác."
-        ];
+      let finalScore = 70;
+      let strengths = [];
+      let gaps = [];
+      let actionSteps = [];
+
+      const apiKey = state.sys_gemini_key;
+      const rub = state.sys_challenge_rubrics[challengeId] || defaultChallengeRubrics[challengeId];
+
+      if (apiKey && apiKey.trim() !== "") {
+        consoleLog.innerText = "Connecting to Gemini 1.5 Flash API...";
+        try {
+          // Import dynamic module from esm.run
+          const module = await import('https://esm.run/@google/generative-ai');
+          const genAI = new module.GoogleGenerativeAI(apiKey);
+          
+          const systemInstruction = state.sys_system_prompt || defaultSystemPrompt;
+          const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            generationConfig: { responseMimeType: "application/json" }
+          });
+
+          const userPrompt = `
+STUDENT PROFILE:
+- Name: ${name}
+- Major: ${major}
+- Email: ${email}
+- Uploaded CV Name: ${cvLabel}
+- Uploaded Solution brief/file: ${solLabel}
+- Student Notes: ${notes}
+
+TARGET RESUME GUIDELINES:
+${state.sys_resume_guidelines}
+
+CHALLENGE EVALUATION RUBRICS & BAREM:
+- Criteria 1: ${rub.crit1} (Weight: ${rub.weight1}%)
+- Criteria 2: ${rub.crit2} (Weight: ${rub.weight2}%)
+- Criteria 3: ${rub.crit3} (Weight: ${rub.weight3}%)
+
+Evaluate the student's submission CV + Solution notes based on the above target guidelines and challenge rubrics.
+Return a valid JSON output matching:
+{
+  "score": <weighted final score as number between 0 and 100>,
+  "strengths": ["Key strength 1 (in Vietnamese)", "Key strength 2 (in Vietnamese)"],
+  "gaps": ["Area of improvement 1 (in Vietnamese)", "Area of improvement 2 (in Vietnamese)"],
+  "actionSteps": ["Action step 1 (in Vietnamese)", "Action step 2 (in Vietnamese)"]
+}
+`;
+
+          consoleLog.innerText = "AI is grading resume & solution brief...";
+          
+          const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            systemInstruction: systemInstruction
+          });
+
+          const responseText = await result.response.text();
+          console.log("Gemini Response:", responseText);
+
+          const responseJson = JSON.parse(responseText.trim());
+          finalScore = responseJson.score || 75;
+          strengths = responseJson.strengths || ["Đã đánh giá các tiêu chí đạt chuẩn cơ bản."];
+          gaps = responseJson.gaps || ["Cần hoàn thiện thêm cấu trúc giải pháp chi tiết."];
+          actionSteps = responseJson.actionSteps || ["Đọc kỹ các hướng dẫn chấm điểm và nộp lại bài giải tối ưu hơn."];
+
+        } catch (error) {
+          console.error("Gemini API Error:", error);
+          consoleLog.innerText = "API Error! Falling back to simulated scoring...";
+          await new Promise(r => setTimeout(r, 1200));
+          
+          const parsed = runSimulatedEvaluation(notes, major, rub);
+          finalScore = parsed.score;
+          strengths = parsed.strengths;
+          gaps = parsed.gaps;
+          actionSteps = parsed.actionSteps;
+        }
+      } else {
+        // Fallback simulation based on prompt contents
+        consoleLog.innerText = "Demo Mode: Running simulated scoring pipeline...";
+        await new Promise(r => setTimeout(r, 1000));
+        
+        const parsed = runSimulatedEvaluation(notes, major, rub);
+        finalScore = parsed.score;
+        strengths = parsed.strengths;
+        gaps = parsed.gaps;
+        actionSteps = parsed.actionSteps;
       }
+
+      // Hide scanner overlay
+      overlay.classList.add('hidden');
 
       const isApproved = finalScore >= 80;
       
@@ -1879,6 +2266,167 @@
       alert(`Demo routing: Navigating to ${tabId}`);
     }
 
+
+    // Populate dropdown for challenges in System Admin
+    function populateChallengeSelectInAdmin() {
+      const select = document.getElementById('sys-rubric-challenge-select');
+      if (!select) return;
+      select.innerHTML = '';
+      seededChallenges.forEach(ch => {
+        const option = document.createElement('option');
+        option.value = ch.id;
+        option.innerText = ch.title;
+        select.appendChild(option);
+      });
+      loadChallengeRubricInAdmin();
+    }
+
+    // Load rubrics when challenge selection is changed
+    function loadChallengeRubricInAdmin() {
+      const select = document.getElementById('sys-rubric-challenge-select');
+      if (!select) return;
+      const challengeId = parseInt(select.value);
+      const rub = state.sys_challenge_rubrics[challengeId];
+      if (rub) {
+        document.getElementById('sys-rubric-crit1').value = rub.crit1;
+        document.getElementById('sys-rubric-weight1').value = rub.weight1;
+        document.getElementById('sys-rubric-crit2').value = rub.crit2;
+        document.getElementById('sys-rubric-weight2').value = rub.weight2;
+        document.getElementById('sys-rubric-crit3').value = rub.crit3;
+        document.getElementById('sys-rubric-weight3').value = rub.weight3;
+      }
+    }
+
+    // Save configurations
+    function saveSysadminApiKey() {
+      const keyInput = document.getElementById('sys-gemini-key').value.trim();
+      state.sys_gemini_key = keyInput;
+      saveDatabase();
+      alert("Gemini API Key saved successfully!");
+    }
+
+    function saveSysadminPrompts() {
+      const prompt = document.getElementById('sys-system-prompt').value.trim();
+      state.sys_system_prompt = prompt;
+      saveDatabase();
+      alert("AI System Prompt saved successfully!");
+    }
+
+    function saveSysadminResumeGuidelines() {
+      const guidelines = document.getElementById('sys-resume-guidelines').value.trim();
+      state.sys_resume_guidelines = guidelines;
+      saveDatabase();
+      alert("Resume Guidelines saved successfully!");
+    }
+
+    function saveSysadminChallengeRubric() {
+      const select = document.getElementById('sys-rubric-challenge-select');
+      const challengeId = parseInt(select.value);
+      
+      const c1 = document.getElementById('sys-rubric-crit1').value.trim();
+      const w1 = parseInt(document.getElementById('sys-rubric-weight1').value) || 0;
+      const c2 = document.getElementById('sys-rubric-crit2').value.trim();
+      const w2 = parseInt(document.getElementById('sys-rubric-weight2').value) || 0;
+      const c3 = document.getElementById('sys-rubric-crit3').value.trim();
+      const w3 = parseInt(document.getElementById('sys-rubric-weight3').value) || 0;
+      
+      if (w1 + w2 + w3 !== 100) {
+        alert("Warning: The sum of weights does not equal 100%. Total weights: " + (w1 + w2 + w3) + "%. Please adjust before saving.");
+        return;
+      }
+      
+      state.sys_challenge_rubrics[challengeId] = {
+        crit1: c1,
+        weight1: w1,
+        crit2: c2,
+        weight2: w2,
+        crit3: c3,
+        weight3: w3
+      };
+      
+      saveDatabase();
+      alert("Challenge Rubrics saved successfully!");
+    }
+
+    function resetSysadminDefaultDatabase() {
+      if (confirm("Are you sure you want to reset all System Admin configurations to defaults?")) {
+        state.sys_system_prompt = defaultSystemPrompt;
+        state.sys_resume_guidelines = defaultResumeGuidelines;
+        state.sys_challenge_rubrics = JSON.parse(JSON.stringify(defaultChallengeRubrics));
+        state.sys_gemini_key = "";
+        state.sys_resume_templates = JSON.parse(JSON.stringify(defaultResumeTemplates));
+        
+        document.getElementById('sys-gemini-key').value = "";
+        document.getElementById('sys-system-prompt').value = defaultSystemPrompt;
+        document.getElementById('sys-resume-guidelines').value = defaultResumeGuidelines;
+        
+        loadChallengeRubricInAdmin();
+        renderSysadminTemplateList();
+        saveDatabase();
+        alert("System configurations reset to defaults!");
+      }
+    }
+
+    // Handle template file upload in System Admin view
+    function handleSysadminTemplateUpload(event) {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileSizeStr = file.size > 1024 * 1024 
+          ? (file.size / (1024 * 1024)).toFixed(1) + " MB" 
+          : (file.size / 1024).toFixed(0) + " KB";
+        
+        state.sys_resume_templates.push({
+          name: file.name,
+          size: fileSizeStr,
+          uploadDate: new Date().toISOString().split('T')[0]
+        });
+      }
+      saveDatabase();
+      renderSysadminTemplateList();
+      alert("Simulated upload successful! Files added to template library.");
+    }
+
+    // Render template list in UI
+    function renderSysadminTemplateList() {
+      const container = document.getElementById('sys-template-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (state.sys_resume_templates.length === 0) {
+        container.innerHTML = `<p class="text-[10px] text-slate-500 italic py-2 text-center">No template files uploaded.</p>`;
+        return;
+      }
+
+      state.sys_resume_templates.forEach((temp, index) => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between bg-slate-950/60 border border-brand-border rounded-xl p-2.5 text-xxs";
+        item.innerHTML = `
+          <div class="flex items-center space-x-2 truncate max-w-[80%]">
+            <i class="fa-solid fa-file-pdf text-emerald-400"></i>
+            <div>
+              <p class="font-bold text-slate-200 truncate" title="${temp.name}">${temp.name}</p>
+              <p class="text-[9px] text-slate-500">${temp.size} · Uploaded: ${temp.uploadDate}</p>
+            </div>
+          </div>
+          <button onclick="deleteSysadminTemplate(${index})" class="text-slate-500 hover:text-red-400 p-1.5 transition-colors">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Delete a template from state
+    function deleteSysadminTemplate(index) {
+      if (confirm(`Remove template "${state.sys_resume_templates[index].name}" from library?`)) {
+        state.sys_resume_templates.splice(index, 1);
+        saveDatabase();
+        renderSysadminTemplateList();
+      }
+    }
 
     /* --- INITIALIZATION ON START --- */
     window.addEventListener('DOMContentLoaded', () => {
